@@ -18,20 +18,26 @@ export const crud = <M extends Model>(
   const router = Router();
   router.use(bodyParser.json());
 
-  if (actionTypes.includes(ActionType.GET_LIST)) {
-    router.get(resource, getList(model));
-  }
-  if (actionTypes.includes(ActionType.GET_ONE)) {
-    router.get(`${resource}/:id`, getOne(model));
-  }
-  if (actionTypes.includes(ActionType.CREATE)) {
-    router.post(resource, create(model));
-  }
-  if (actionTypes.includes(ActionType.UPDATE)) {
-    router.put(`${resource}/:id`, update(model));
-  }
-  if (actionTypes.includes(ActionType.DELETE)) {
-    router.delete(`${resource}/:id`, destroy(model));
+  for (const actionType of actionTypes) {
+    switch (actionType) {
+      case ActionType.GET_LIST:
+        router.get(resource, getList(model));
+        break;
+      case ActionType.GET_ONE:
+        router.get(`${resource}/:id`, getOne(model));
+        break;
+      case ActionType.CREATE:
+        router.post(resource, create(model));
+        break;
+      case ActionType.UPDATE:
+        router.put(`${resource}/:id`, update(model));
+        break;
+      case ActionType.DELETE:
+        router.delete(`${resource}/:id`, destroy(model));
+        break;
+      default:
+        throw new Error(`Unknown action type ${actionType}`);
+    }
   }
   return router;
 };

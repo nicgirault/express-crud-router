@@ -2,7 +2,32 @@ import { crud, ActionType } from "../src";
 import { User } from "./User";
 import { setupApp } from "./app";
 
-describe("Action types", () => {
+describe("crud", () => {
+  it("should throw an error if calling an unknown action type", async () => {
+    expect.assertions(1);
+
+    try {
+      await setupApp(crud("/users", User, ["GEET_LIST" as any]));
+    } catch (error) {
+      expect(error.message).toEqual("Unknown action type GEET_LIST");
+    }
+  });
+
+  it("should not setup a non-specified action", async () => {
+    expect.assertions(1);
+    const dataProvider = await setupApp(
+      crud("/users", User, [ActionType.GET_LIST])
+    );
+
+    try {
+      await dataProvider(ActionType.GET_ONE, "users", {
+        id: 1
+      });
+    } catch (error) {
+      expect(error.message).toEqual("Not Found");
+    }
+  });
+
   describe("GET_LIST", () => {
     const findAndCountAll = jest.spyOn(User, "findAndCountAll");
 
