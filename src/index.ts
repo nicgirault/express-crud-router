@@ -31,12 +31,17 @@ const getList = <M extends Model>(
 ): RequestHandler => async (req, res, next) => {
   try {
     const { range, sort, filter } = req.query;
+
     const [from, to] = range ? JSON.parse(range) : [0, 100];
+
     const { count, rows } = await model.findAndCountAll({
       offset: from,
       limit: to - from + 1,
+      order: [sort ? JSON.parse(sort) : ["id", "ASC"]],
+      where: filter ? JSON.parse(filter) : {},
       raw: true
     });
+
     res.set("Content-Range", `${from}-${from + rows.length}/${count}`);
     res.json(rows);
   } catch (error) {

@@ -10,7 +10,7 @@ describe("Action types", () => {
       findAndCountAll.mockReset();
     });
 
-    it("should handle pagination", async () => {
+    it("should handle pagination and sort", async () => {
       const dataProvider = await setupApp(
         crud("/users", User, [ActionType.GET_LIST])
       );
@@ -26,7 +26,7 @@ describe("Action types", () => {
 
       const response = await dataProvider(ActionType.GET_LIST, "users", {
         pagination: { page: 3, perPage: 5 },
-        sort: {},
+        sort: { field: "name", order: "DESC" },
         filter: {}
       });
 
@@ -35,6 +35,8 @@ describe("Action types", () => {
       expect(findAndCountAll).toHaveBeenCalledWith({
         offset: 10,
         limit: 5,
+        where: {},
+        order: [["name", "DESC"]],
         raw: true
       });
     });
