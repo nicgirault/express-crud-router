@@ -1,0 +1,63 @@
+{
+  "name": "ra-express-sequelize-backend",
+  "version": "1.5.0",
+  "description": "React Admin backend with Express and Sequelize. 1 line per resource!",
+  "main": "./lib/index.js",
+  "types": "./lib/main.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nicgirault/ra-express-sequelize-backend.git"
+  },
+  "author": "nicgirault <nic.girault@gmail.com>",
+  "keywords": [
+    "react-admin",
+    "sequelize",
+    "express"
+  ],
+  "tags": [
+    "react-admin",
+    "sequelize",
+    "express"
+  ],
+  "bugs": {
+    "url": "https://github.com/nicgirault/ra-express-sequelize-backend/issues"
+  },
+  "homepage": "https://github.com/nicgirault/ra-express-sequelize-backend#readme",
+  "license": "MIT",
+  "scripts": {
+    "build": "rimraf lib && babel src -d lib --extensions '.ts'",
+    "prebuild": "yarn check-types && yarn test",
+    "postbuild": "tsc --declaration src/index.ts --outDir lib",
+    "prepublish": "yarn build",
+    "run-cli": "babel-node --extensions '.ts' src/cli.ts",
+    "check-types": "tsc",
+    "test": "jest"
+  },
+  "files": [
+    "lib/**/*"
+  ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn check-types"
+    }
+  },
+  "dependencies": {
+    "rimraf": "^3.0.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.6.4",
+    "@babel/core": "^7.6.4",
+    "@babel/node": "^7.6.3",
+    "@babel/plugin-proposal-class-properties": "^7.5.5",
+    "@babel/plugin-proposal-object-rest-spread": "^7.6.2",
+    "@babel/preset-env": "^7.6.3",
+    "@babel/preset-typescript": "^7.6.0",
+    "@types/jest": "^24.0.19",
+    "@types/mime-types": "^2.1.0",
+    "@types/node": "^12.11.6",
+    "codecov": "^3.6.1",
+    "husky": "^3.0.9",
+    "jest": "^24.9.0",
+    "typescript": "^3.6.4"
+  }
+}
