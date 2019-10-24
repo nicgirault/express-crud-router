@@ -84,4 +84,92 @@ describe("Action types", () => {
       }
     });
   });
+
+  describe("CREATE", () => {
+    const create = jest.spyOn(User, "create");
+
+    beforeEach(() => {
+      create.mockReset();
+    });
+
+    it("should call create", async () => {
+      const dataProvider = await setupApp(
+        crud("/users", User, [ActionType.CREATE])
+      );
+
+      create.mockResolvedValue({ id: 1, name: "Éloi" } as any);
+
+      const response = await dataProvider(ActionType.CREATE, "users", {
+        data: {
+          name: "Éloi"
+        }
+      });
+
+      expect(response.data).toEqual({ id: 1, name: "Éloi" });
+      expect(create).toHaveBeenCalledWith(
+        { name: "Éloi" },
+        {
+          raw: true
+        }
+      );
+    });
+  });
+
+  describe("UPDATE", () => {
+    const update = jest.spyOn(User, "update");
+    const findByPk = jest.spyOn(User, "findByPk");
+
+    beforeEach(() => {
+      update.mockReset();
+      findByPk.mockReset();
+    });
+
+    it("should call update", async () => {
+      const dataProvider = await setupApp(
+        crud("/users", User, [ActionType.UPDATE])
+      );
+
+      findByPk.mockResolvedValue({ id: 1, name: "Éloi" } as any);
+      update.mockResolvedValue({ id: 1, name: "Éloi" } as any);
+
+      const response = await dataProvider(ActionType.UPDATE, "users", {
+        id: 1,
+        data: {
+          name: "Éloi"
+        }
+      });
+
+      expect(response.data).toEqual({ id: 1, name: "Éloi" });
+      expect(update).toHaveBeenCalledWith(
+        { name: "Éloi" },
+        {
+          where: {
+            id: "1"
+          },
+          returning: true
+        }
+      );
+    });
+
+    it("should throw a 404 if record is not found", async () => {
+      expect.assertions(1);
+
+      const dataProvider = await setupApp(
+        crud("/users", User, [ActionType.UPDATE])
+      );
+
+      findByPk.mockResolvedValue(null);
+
+      try {
+        await dataProvider(ActionType.UPDATE, "users", {
+          id: 1,
+          data: {
+            name: "Éloi"
+          }
+        });
+      } catch (error) {
+        expect(error.status).toEqual(404);
+      }
+    });
+  });
 });

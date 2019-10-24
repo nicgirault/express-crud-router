@@ -1,6 +1,6 @@
 import { Router, RequestHandler } from "express";
+import bodyParser from "body-parser";
 import { Model } from "sequelize";
-import { NotFound } from "http-errors";
 
 export enum ActionType {
   GET_LIST = "GET_LIST",
@@ -20,12 +20,19 @@ export const crud = <M extends Model>(
   actionTypes: ActionType[]
 ) => {
   const router = Router();
+  router.use(bodyParser.json());
 
   if (actionTypes.includes(ActionType.GET_LIST)) {
     router.get(resource, getList(model));
   }
   if (actionTypes.includes(ActionType.GET_ONE)) {
     router.get(`${resource}/:id`, getOne(model));
+  }
+  if (actionTypes.includes(ActionType.CREATE)) {
+    router.post(resource, create(model));
+  }
+  if (actionTypes.includes(ActionType.UPDATE)) {
+    router.put(`${resource}/:id`, update(model));
   }
   return router;
 };
@@ -62,9 +69,40 @@ const getOne = <M extends Model>(
     });
 
     if (!record) {
-      throw new NotFound();
+      return res.status(404).json({ error: "Record not found" });
     }
     res.json(record);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const create = <M extends Model>(
+  model: { new (): M } & typeof Model
+): RequestHandler => async (req, res, next) => {
+  try {
+    const record = await model.create(req.body, { raw: true });
+    res.status(201).json(record);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const update = <M extends Model>(
+  model: { new (): M } & typeof Model
+): RequestHandler => async (req, res, next) => {
+  try {
+    const record = await model.findByPk(req.params.id);
+
+    if (!record) {
+      return res.status(404).json({ error: "Record not found" });
+    }
+    res.json(
+      await model.update(req.body, {
+        where: { id: req.params.id },
+        returning: true
+      })
+    );
   } catch (error) {
     next(error);
   }
