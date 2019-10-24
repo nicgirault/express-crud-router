@@ -7,9 +7,7 @@ export enum ActionType {
   GET_ONE = "GET_ONE",
   CREATE = "CREATE",
   UPDATE = "UPDATE",
-  DELETE = "DELETE",
-  GET_MANY = "GET_MANY",
-  GET_MANY_REFERENCE = "GET_MANY_REFERENCE"
+  DELETE = "DELETE"
 }
 
 export const crud = <M extends Model>(
