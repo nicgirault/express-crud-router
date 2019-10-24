@@ -15,7 +15,7 @@ describe("crud", () => {
 
   it("should not setup a non-specified action", async () => {
     expect.assertions(1);
-    const dataProvider = await setupApp(
+    const [dataProvider, server] = await setupApp(
       crud("/users", User, [ActionType.GET_LIST])
     );
 
@@ -25,199 +25,191 @@ describe("crud", () => {
       });
     } catch (error) {
       expect(error.message).toEqual("Not Found");
+      server.close();
     }
   });
 
-  describe("GET_LIST", () => {
-    const findAndCountAll = jest.spyOn(User, "findAndCountAll");
+  describe("actions", () => {
+    const ctx = {
+      server: null,
+      dataProvider: null
+    };
 
-    beforeEach(() => {
-      findAndCountAll.mockReset();
-    });
-
-    it("should handle pagination and sort", async () => {
-      const dataProvider = await setupApp(
-        crud("/users", User, [ActionType.GET_LIST])
+    beforeEach(async () => {
+      const [dataProvider, server] = await setupApp(
+        crud("/users", User, Object.values(ActionType))
       );
-
-      const rows = new Array(5)
-        .fill(1)
-        .map((_, index) => ({ id: index, name: `name ${index}` }));
-
-      findAndCountAll.mockResolvedValue({
-        count: 300,
-        rows: rows as User[]
-      });
-
-      const response = await dataProvider(ActionType.GET_LIST, "users", {
-        pagination: { page: 3, perPage: 5 },
-        sort: { field: "name", order: "DESC" },
-        filter: {}
-      });
-
-      expect(response.data).toEqual(rows);
-      expect(response.total).toEqual(300);
-      expect(findAndCountAll).toHaveBeenCalledWith({
-        offset: 10,
-        limit: 5,
-        where: {},
-        order: [["name", "DESC"]],
-        raw: true
-      });
-    });
-  });
-
-  describe("GET_ONE", () => {
-    const findByPk = jest.spyOn(User, "findByPk");
-
-    beforeEach(() => {
-      findByPk.mockReset();
+      ctx.dataProvider = dataProvider;
+      ctx.server = server;
     });
 
-    it("should call findByPk with the provided id", async () => {
-      const dataProvider = await setupApp(
-        crud("/users", User, [ActionType.GET_ONE])
-      );
+    afterEach(() => {
+      ctx.server.close();
+    });
 
-      findByPk.mockResolvedValue({ id: 1, name: "Éloi" } as User);
+    describe("GET_LIST", () => {
+      const findAndCountAll = jest.spyOn(User, "findAndCountAll");
 
-      const response = await dataProvider(ActionType.GET_ONE, "users", {
-        id: 1
+      beforeEach(() => {
+        findAndCountAll.mockReset();
       });
 
-      expect(response.data).toEqual({ id: 1, name: "Éloi" });
-      expect(findByPk).toHaveBeenCalledWith("1", {
-        raw: true
+      it("should handle pagination and sort", async () => {
+        const rows = new Array(5)
+          .fill(1)
+          .map((_, index) => ({ id: index, name: `name ${index}` }));
+
+        findAndCountAll.mockResolvedValue({
+          count: 300,
+          rows: rows as User[]
+        });
+
+        const response = await ctx.dataProvider(ActionType.GET_LIST, "users", {
+          pagination: { page: 3, perPage: 5 },
+          sort: { field: "name", order: "DESC" },
+          filter: {}
+        });
+
+        expect(response.data).toEqual(rows);
+        expect(response.total).toEqual(300);
+        expect(findAndCountAll).toHaveBeenCalledWith({
+          offset: 10,
+          limit: 5,
+          where: {},
+          order: [["name", "DESC"]],
+          raw: true
+        });
       });
     });
 
-    it("should throw a 404 when record is not found", async () => {
-      expect.assertions(1);
+    describe("GET_ONE", () => {
+      const findByPk = jest.spyOn(User, "findByPk");
 
-      const dataProvider = await setupApp(
-        crud("/users", User, [ActionType.GET_ONE])
-      );
+      beforeEach(() => {
+        findByPk.mockReset();
+      });
 
-      findByPk.mockResolvedValue(null);
+      it("should call findByPk with the provided id", async () => {
+        findByPk.mockResolvedValue({ id: 1, name: "Éloi" } as User);
 
-      try {
-        await dataProvider(ActionType.GET_ONE, "users", {
+        const response = await ctx.dataProvider(ActionType.GET_ONE, "users", {
           id: 1
         });
-      } catch (error) {
-        expect(error.status).toEqual(404);
-      }
-    });
-  });
 
-  describe("CREATE", () => {
-    const create = jest.spyOn(User, "create");
-
-    beforeEach(() => {
-      create.mockReset();
-    });
-
-    it("should call create", async () => {
-      const dataProvider = await setupApp(
-        crud("/users", User, [ActionType.CREATE])
-      );
-
-      create.mockResolvedValue({ id: 1, name: "Éloi" } as any);
-
-      const response = await dataProvider(ActionType.CREATE, "users", {
-        data: {
-          name: "Éloi"
-        }
-      });
-
-      expect(response.data).toEqual({ id: 1, name: "Éloi" });
-      expect(create).toHaveBeenCalledWith(
-        { name: "Éloi" },
-        {
+        expect(response.data).toEqual({ id: 1, name: "Éloi" });
+        expect(findByPk).toHaveBeenCalledWith("1", {
           raw: true
-        }
-      );
-    });
-  });
-
-  describe("UPDATE", () => {
-    const update = jest.spyOn(User, "update");
-    const findByPk = jest.spyOn(User, "findByPk");
-
-    beforeEach(() => {
-      update.mockReset();
-      findByPk.mockReset();
-    });
-
-    it("should call update", async () => {
-      const dataProvider = await setupApp(
-        crud("/users", User, [ActionType.UPDATE])
-      );
-
-      findByPk.mockResolvedValue({ id: 1, name: "Éloi" } as any);
-      update.mockResolvedValue({ id: 1, name: "Éloi" } as any);
-
-      const response = await dataProvider(ActionType.UPDATE, "users", {
-        id: 1,
-        data: {
-          name: "Éloi"
-        }
+        });
       });
 
-      expect(response.data).toEqual({ id: 1, name: "Éloi" });
-      expect(update).toHaveBeenCalledWith(
-        { name: "Éloi" },
-        {
-          where: {
-            id: "1"
-          },
-          returning: true
+      it("should throw a 404 when record is not found", async () => {
+        expect.assertions(1);
+
+        findByPk.mockResolvedValue(null);
+
+        try {
+          await ctx.dataProvider(ActionType.GET_ONE, "users", {
+            id: 1
+          });
+        } catch (error) {
+          expect(error.status).toEqual(404);
         }
-      );
+      });
     });
 
-    it("should throw a 404 if record is not found", async () => {
-      expect.assertions(1);
+    describe("CREATE", () => {
+      const create = jest.spyOn(User, "create");
 
-      const dataProvider = await setupApp(
-        crud("/users", User, [ActionType.UPDATE])
-      );
+      beforeEach(() => {
+        create.mockReset();
+      });
 
-      findByPk.mockResolvedValue(null);
+      it("should call create", async () => {
+        create.mockResolvedValue({ id: 1, name: "Éloi" } as any);
 
-      try {
-        await dataProvider(ActionType.UPDATE, "users", {
+        const response = await ctx.dataProvider(ActionType.CREATE, "users", {
+          data: {
+            name: "Éloi"
+          }
+        });
+
+        expect(response.data).toEqual({ id: 1, name: "Éloi" });
+        expect(create).toHaveBeenCalledWith(
+          { name: "Éloi" },
+          {
+            raw: true
+          }
+        );
+      });
+    });
+
+    describe("UPDATE", () => {
+      const update = jest.spyOn(User, "update");
+      const findByPk = jest.spyOn(User, "findByPk");
+
+      beforeEach(() => {
+        update.mockReset();
+        findByPk.mockReset();
+      });
+
+      it("should call update", async () => {
+        findByPk.mockResolvedValue({ id: 1, name: "Éloi" } as any);
+        update.mockResolvedValue({ id: 1, name: "Éloi" } as any);
+
+        const response = await ctx.dataProvider(ActionType.UPDATE, "users", {
           id: 1,
           data: {
             name: "Éloi"
           }
         });
-      } catch (error) {
-        expect(error.status).toEqual(404);
-      }
-    });
-  });
 
-  describe("DELETE", () => {
-    const destroy = jest.spyOn(User, "destroy");
-
-    beforeEach(() => {
-      destroy.mockReset();
-    });
-
-    it("should call destroy", async () => {
-      const dataProvider = await setupApp(
-        crud("/users", User, [ActionType.DELETE])
-      );
-
-      destroy.mockResolvedValue(null);
-
-      const response = await dataProvider(ActionType.DELETE, "users", {
-        id: 1
+        expect(response.data).toEqual({ id: 1, name: "Éloi" });
+        expect(update).toHaveBeenCalledWith(
+          { name: "Éloi" },
+          {
+            where: {
+              id: "1"
+            },
+            returning: true
+          }
+        );
       });
 
-      expect(response.data).toEqual({ id: "1" });
-      expect(destroy).toHaveBeenCalledWith({ where: { id: "1" } });
+      it("should throw a 404 if record is not found", async () => {
+        expect.assertions(1);
+
+        findByPk.mockResolvedValue(null);
+
+        try {
+          await ctx.dataProvider(ActionType.UPDATE, "users", {
+            id: 1,
+            data: {
+              name: "Éloi"
+            }
+          });
+        } catch (error) {
+          expect(error.status).toEqual(404);
+        }
+      });
+    });
+
+    describe("DELETE", () => {
+      const destroy = jest.spyOn(User, "destroy");
+
+      beforeEach(() => {
+        destroy.mockReset();
+      });
+
+      it("should call destroy", async () => {
+        destroy.mockResolvedValue(null);
+
+        const response = await ctx.dataProvider(ActionType.DELETE, "users", {
+          id: 1
+        });
+
+        expect(response.data).toEqual({ id: "1" });
+        expect(destroy).toHaveBeenCalledWith({ where: { id: "1" } });
+      });
     });
   });
 });

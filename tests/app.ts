@@ -1,5 +1,6 @@
 import express, { RequestHandler } from "express";
 import simpleRestProvider from "ra-data-simple-rest";
+import { Server } from "http";
 
 let portOffset = 0;
 
@@ -20,7 +21,13 @@ export const setupApp = async (requestHandler: RequestHandler) => {
     console.error(err);
     next(err);
   });
-  await new Promise(resolve => app.listen(port, resolve));
 
-  return simpleRestProvider(`http://localhost:${port}`);
+  const server = await new Promise<Server>(resolve => {
+    const _server = app.listen(port, () => resolve(_server));
+  });
+
+  return [simpleRestProvider(`http://localhost:${port}`), server] as [
+    (type: any, resource: any, params: any) => any,
+    Server
+  ];
 };
