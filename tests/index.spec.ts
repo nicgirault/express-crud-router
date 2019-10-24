@@ -41,4 +41,47 @@ describe("Action types", () => {
       });
     });
   });
+
+  describe("GET_ONE", () => {
+    const findByPk = jest.spyOn(User, "findByPk");
+
+    beforeEach(() => {
+      findByPk.mockReset();
+    });
+
+    it("should call findByPk with the provided id", async () => {
+      const dataProvider = await setupApp(
+        crud("/users", User, [ActionType.GET_ONE])
+      );
+
+      findByPk.mockResolvedValue({ id: 1, name: "Éloi" } as User);
+
+      const response = await dataProvider(ActionType.GET_ONE, "users", {
+        id: 1
+      });
+
+      expect(response.data).toEqual({ id: 1, name: "Éloi" });
+      expect(findByPk).toHaveBeenCalledWith("1", {
+        raw: true
+      });
+    });
+
+    it("should throw a 404 when record is not found", async () => {
+      expect.assertions(1);
+
+      const dataProvider = await setupApp(
+        crud("/users", User, [ActionType.GET_ONE])
+      );
+
+      findByPk.mockResolvedValue(null);
+
+      try {
+        await dataProvider(ActionType.GET_ONE, "users", {
+          id: 1
+        });
+      } catch (error) {
+        expect(error.status).toEqual(404);
+      }
+    });
+  });
 });

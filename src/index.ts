@@ -1,5 +1,6 @@
 import { Router, RequestHandler } from "express";
 import { Model } from "sequelize";
+import { NotFound } from "http-errors";
 
 export enum ActionType {
   GET_LIST = "GET_LIST",
@@ -23,6 +24,9 @@ export const crud = <M extends Model>(
   if (actionTypes.includes(ActionType.GET_LIST)) {
     router.get(resource, getList(model));
   }
+  if (actionTypes.includes(ActionType.GET_ONE)) {
+    router.get(`${resource}/:id`, getOne(model));
+  }
   return router;
 };
 
@@ -44,6 +48,23 @@ const getList = <M extends Model>(
 
     res.set("Content-Range", `${from}-${from + rows.length}/${count}`);
     res.json(rows);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getOne = <M extends Model>(
+  model: { new (): M } & typeof Model
+): RequestHandler => async (req, res, next) => {
+  try {
+    const record = await model.findByPk(req.params.id, {
+      raw: true
+    });
+
+    if (!record) {
+      throw new NotFound();
+    }
+    res.json(record);
   } catch (error) {
     next(error);
   }
