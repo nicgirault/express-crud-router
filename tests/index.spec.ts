@@ -172,4 +172,27 @@ describe("Action types", () => {
       }
     });
   });
+
+  describe("DELETE", () => {
+    const destroy = jest.spyOn(User, "destroy");
+
+    beforeEach(() => {
+      destroy.mockReset();
+    });
+
+    it("should call destroy", async () => {
+      const dataProvider = await setupApp(
+        crud("/users", User, [ActionType.DELETE])
+      );
+
+      destroy.mockResolvedValue(null);
+
+      const response = await dataProvider(ActionType.DELETE, "users", {
+        id: 1
+      });
+
+      expect(response.data).toEqual({ id: "1" });
+      expect(destroy).toHaveBeenCalledWith({ where: { id: "1" } });
+    });
+  });
 });

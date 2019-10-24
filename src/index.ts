@@ -7,9 +7,7 @@ export enum ActionType {
   GET_ONE = "GET_ONE",
   CREATE = "CREATE",
   UPDATE = "UPDATE",
-  UPDATE_MANY = "UPDATE_MANY",
   DELETE = "DELETE",
-  DELETE_MANY = "DELETE_MANY",
   GET_MANY = "GET_MANY",
   GET_MANY_REFERENCE = "GET_MANY_REFERENCE"
 }
@@ -33,6 +31,9 @@ export const crud = <M extends Model>(
   }
   if (actionTypes.includes(ActionType.UPDATE)) {
     router.put(`${resource}/:id`, update(model));
+  }
+  if (actionTypes.includes(ActionType.DELETE)) {
+    router.delete(`${resource}/:id`, destroy(model));
   }
   return router;
 };
@@ -103,6 +104,17 @@ const update = <M extends Model>(
         returning: true
       })
     );
+  } catch (error) {
+    next(error);
+  }
+};
+
+const destroy = <M extends Model>(
+  model: { new (): M } & typeof Model
+): RequestHandler => async (req, res, next) => {
+  try {
+    await model.destroy({ where: { id: req.params.id } });
+    res.json({ id: req.params.id });
   } catch (error) {
     next(error);
   }
