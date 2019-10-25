@@ -6,7 +6,7 @@
   "types": "./lib/main.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lalilo/ra-express-sequelize-backend.git"
+    "url": "git+https://github.com/lalalilo/ra-express-sequelize-backend.git"
   },
   "author": "nicgirault <nic.girault@gmail.com>",
   "keywords": [
@@ -20,9 +20,9 @@
     "express"
   ],
   "bugs": {
-    "url": "https://github.com/lalilo/ra-express-sequelize-backend/issues"
+    "url": "https://github.com/lalalilo/ra-express-sequelize-backend/issues"
   },
-  "homepage": "https://github.com/lalilo/ra-express-sequelize-backend#readme",
+  "homepage": "https://github.com/lalalilo/ra-express-sequelize-backend#readme",
   "license": "MIT",
   "scripts": {
     "build": "rimraf lib && babel src -d lib --extensions '.ts'",
