@@ -1,5 +1,5 @@
 import { Router, RequestHandler } from "express";
-import bodyParser from "body-parser";
+import * as bodyParser from "body-parser";
 import { Model } from "sequelize";
 
 export enum ActionType {
@@ -17,6 +17,7 @@ export const crud = <M extends Model>(
 ) => {
   const router = Router();
   router.use(bodyParser.json());
+  router.use(appendHeaders);
 
   for (const actionType of actionTypes) {
     switch (actionType) {
@@ -122,4 +123,22 @@ const destroy = <M extends Model>(
   } catch (error) {
     next(error);
   }
+};
+
+const appendHeaders: RequestHandler = (req, res, next) => {
+  for (const name of [
+    "Access-Control-Expose-Headers",
+    "Access-Control-Allow-Headers"
+  ]) {
+    const rawValue = res.getHeader(name) || "";
+    if (typeof rawValue !== "string") {
+      return next();
+    }
+    const headers = rawValue.split(",").map(header => header.trim());
+    if (!headers.includes("Content-Range")) {
+      headers.push("Content-Range");
+    }
+    res.header(name, headers.join(", "));
+  }
+  next();
 };
