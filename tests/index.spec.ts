@@ -36,9 +36,7 @@ describe("crud", () => {
     };
 
     beforeEach(async () => {
-      const [dataProvider, server] = await setupApp(
-        crud("/users", User, Object.values(ActionType))
-      );
+      const [dataProvider, server] = await setupApp(crud("/users", User));
       ctx.dataProvider = dataProvider;
       ctx.server = server;
     });
@@ -80,6 +78,31 @@ describe("crud", () => {
           raw: true
         });
       });
+
+      it("should handle toJson", async () => {
+        const [dataProvider, server] = await setupApp(
+          crud("/users", User, Object.values(ActionType), ({ id, name }) => ({
+            id,
+            firstName: name
+          }))
+        );
+
+        findAndCountAll.mockResolvedValue({
+          count: 300,
+          rows: new Array(5)
+            .fill(1)
+            .map((_, index) => ({ id: index, name: `name ${index}` })) as User[]
+        });
+
+        const response = await dataProvider(ActionType.GET_LIST, "users", {
+          pagination: { page: 3, perPage: 5 },
+          sort: { field: "name", order: "DESC" },
+          filter: {}
+        });
+
+        expect(response.data[0]).toEqual({ id: 0, firstName: "name 0" });
+        server.close();
+      });
     });
 
     describe("GET_ONE", () => {
@@ -114,6 +137,24 @@ describe("crud", () => {
         } catch (error) {
           expect(error.status).toEqual(404);
         }
+      });
+
+      it("should handle toJson", async () => {
+        const [dataProvider, server] = await setupApp(
+          crud("/users", User, Object.values(ActionType), ({ id, name }) => ({
+            id,
+            firstName: name
+          }))
+        );
+
+        findByPk.mockResolvedValue({ id: 1, name: "Éloi" } as User);
+
+        const response = await dataProvider(ActionType.GET_ONE, "users", {
+          id: 1
+        });
+
+        expect(response.data).toEqual({ id: 1, firstName: "Éloi" });
+        server.close();
       });
     });
 

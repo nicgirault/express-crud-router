@@ -13,8 +13,16 @@ export enum ActionType {
 export const crud = <M extends Model>(
   resource: string,
   model: { new (): M } & typeof Model,
-  actionTypes: ActionType[]
+  actionTypes?: ActionType[],
+  toJson?: (instance: M) => Promise<any> | any
 ) => {
+  if (!actionTypes) {
+    actionTypes = Object.values(ActionType);
+  }
+  if (!toJson) {
+    toJson = instance => instance;
+  }
+
   const router = Router();
   router.use(bodyParser.json());
   router.use(appendHeaders);
@@ -22,10 +30,10 @@ export const crud = <M extends Model>(
   for (const actionType of actionTypes) {
     switch (actionType) {
       case ActionType.GET_LIST:
-        router.get(resource, getList(model));
+        router.get(resource, getList(model, toJson));
         break;
       case ActionType.GET_ONE:
-        router.get(`${resource}/:id`, getOne(model));
+        router.get(`${resource}/:id`, getOne(model, toJson));
         break;
       case ActionType.CREATE:
         router.post(resource, create(model));
@@ -44,7 +52,8 @@ export const crud = <M extends Model>(
 };
 
 const getList = <M extends Model>(
-  model: { new (): M } & typeof Model
+  model: { new (): M } & typeof Model,
+  toJson: (instance: M) => Promise<any> | any
 ): RequestHandler => async (req, res, next) => {
   try {
     const { range, sort, filter } = req.query;
@@ -60,14 +69,15 @@ const getList = <M extends Model>(
     });
 
     res.set("Content-Range", `${from}-${from + rows.length}/${count}`);
-    res.json(rows);
+    res.json(await Promise.all(rows.map(row => toJson(row as M))));
   } catch (error) {
     next(error);
   }
 };
 
 const getOne = <M extends Model>(
-  model: { new (): M } & typeof Model
+  model: { new (): M } & typeof Model,
+  toJson: (instance: M) => Promise<any> | any
 ): RequestHandler => async (req, res, next) => {
   try {
     const record = await model.findByPk(req.params.id, {
@@ -77,7 +87,7 @@ const getOne = <M extends Model>(
     if (!record) {
       return res.status(404).json({ error: "Record not found" });
     }
-    res.json(record);
+    res.json(await toJson(record as M));
   } catch (error) {
     next(error);
   }
