@@ -14,6 +14,7 @@ interface Options<Attributes> {
   actionTypes: ActionType[];
   afterGetList: (data: Attributes[]) => any[];
   afterGetOne: (data: Attributes) => any;
+  beforeWrite: (data: any) => any;
 }
 
 export const crud = <M extends Model>(
@@ -25,6 +26,7 @@ export const crud = <M extends Model>(
     (options && options.actionTypes) || Object.values(ActionType);
   const afterGetOne = (options && options.afterGetOne) || (data => data);
   const afterGetList = (options && options.afterGetList) || (data => data);
+  const beforeWrite = (options && options.beforeWrite) || (data => data);
 
   const router = Router();
   router.use(bodyParser.json());
@@ -39,10 +41,10 @@ export const crud = <M extends Model>(
         router.get(`${resource}/:id`, getOne(model, afterGetOne));
         break;
       case ActionType.CREATE:
-        router.post(resource, create(model));
+        router.post(resource, create(model, beforeWrite));
         break;
       case ActionType.UPDATE:
-        router.put(`${resource}/:id`, update(model));
+        router.put(`${resource}/:id`, update(model, beforeWrite));
         break;
       case ActionType.DELETE:
         router.delete(`${resource}/:id`, destroy(model));
@@ -97,10 +99,13 @@ const getOne = <M extends Model>(
 };
 
 const create = <M extends Model>(
-  model: { new (): M } & typeof Model
+  model: { new (): M } & typeof Model,
+  beforeWrite: (data: any) => any
 ): RequestHandler => async (req, res, next) => {
   try {
-    const record = await model.create(req.body, { raw: true });
+    const record = await model.create(await beforeWrite(req.body), {
+      raw: true
+    });
     res.status(201).json(record);
   } catch (error) {
     next(error);
@@ -108,7 +113,8 @@ const create = <M extends Model>(
 };
 
 const update = <M extends Model>(
-  model: { new (): M } & typeof Model
+  model: { new (): M } & typeof Model,
+  beforeWrite: (data: any) => any
 ): RequestHandler => async (req, res, next) => {
   try {
     const record = await model.findByPk(req.params.id);
@@ -117,7 +123,7 @@ const update = <M extends Model>(
       return res.status(404).json({ error: "Record not found" });
     }
     res.json(
-      await model.update(req.body, {
+      await model.update(await beforeWrite(req.body), {
         where: { id: req.params.id },
         returning: true
       })
