@@ -12,6 +12,8 @@ yarn add ra-express-sequelize-backend
 
 ## Usage
 
+### Simple use case
+
 ```ts
 import express from "express";
 import { User } from "./models";
@@ -21,7 +23,7 @@ const app = new express();
 app.use(crud("/admin/users", User));
 ```
 
-You can limit the actions by specifying which actions are allowed:
+### Limit actions
 
 ```ts
 import express from "express";
@@ -36,19 +38,27 @@ app.use(
 );
 ```
 
-You can alter what is served with a mapping function (possibly async):
+### Hooks
 
 ```ts
 import express from "express";
 import { User } from "./models";
-import crud, { ActionType } from "ra-express-sequelize-backend";
+import crud from "ra-express-sequelize-backend";
 
 const app = new express();
 app.use(
   crud("/admin/users", User, {
-    actionTypes: [ActionType.GET_LIST, ActionType.GET_ONE],
-    afterGetOne: user => ({ ...user, foo: "bar" }),
+    // in order of call (these functions can return a promise)
+
+    // called for CREATE and UPDATE actions with req.body
+    beforeWrite: user => ({ ...user, foo: "bar" }),
+
+    // called for GET_LIST with the list of records fetched
     afterGetList: users => users.map(user => ({ ...user, foo: "bar" }))
+
+    // called for GET_LIST, GET_ONE, CREATE, UPDATE
+    // in the case of GET_LIST, it receives the result of `afterGetList`
+    toJson: user => ({ ...user, foo: "bar" }),
   })
 );
 ```
