@@ -10,17 +10,17 @@ export enum ActionType {
   DELETE = "DELETE"
 }
 
-interface Options<Attributes> {
+interface Options {
   actionTypes: ActionType[];
-  toJson: (data: Attributes) => any;
-  afterGetList: (data: Attributes[]) => any[];
+  toJson: (data: any) => any;
+  afterGetList: (data: any[]) => any[];
   beforeWrite: (data: any) => any;
 }
 
 export const crud = <M extends Model>(
   resource: string,
   model: { new (): M } & typeof Model,
-  options?: Partial<Options<any>>
+  options?: Partial<Options>
 ) => {
   const actionTypes =
     (options && options.actionTypes) || Object.values(ActionType);
