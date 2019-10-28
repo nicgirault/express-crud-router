@@ -10,18 +10,21 @@ export enum ActionType {
   DELETE = "DELETE"
 }
 
+interface Options<Attributes> {
+  actionTypes: ActionType[];
+  afterGetList: (data: Attributes[]) => any[];
+  afterGetOne: (data: Attributes) => any;
+}
+
 export const crud = <M extends Model>(
   resource: string,
   model: { new (): M } & typeof Model,
-  actionTypes?: ActionType[],
-  toJson?: (instance: M) => Promise<any> | any
+  options?: Partial<Options<any>>
 ) => {
-  if (!actionTypes) {
-    actionTypes = Object.values(ActionType);
-  }
-  if (!toJson) {
-    toJson = instance => instance;
-  }
+  const actionTypes =
+    (options && options.actionTypes) || Object.values(ActionType);
+  const afterGetOne = (options && options.afterGetOne) || (data => data);
+  const afterGetList = (options && options.afterGetList) || (data => data);
 
   const router = Router();
   router.use(bodyParser.json());
@@ -30,10 +33,10 @@ export const crud = <M extends Model>(
   for (const actionType of actionTypes) {
     switch (actionType) {
       case ActionType.GET_LIST:
-        router.get(resource, getList(model, toJson));
+        router.get(resource, getList(model, afterGetList));
         break;
       case ActionType.GET_ONE:
-        router.get(`${resource}/:id`, getOne(model, toJson));
+        router.get(`${resource}/:id`, getOne(model, afterGetOne));
         break;
       case ActionType.CREATE:
         router.post(resource, create(model));
@@ -53,7 +56,7 @@ export const crud = <M extends Model>(
 
 const getList = <M extends Model>(
   model: { new (): M } & typeof Model,
-  toJson: (instance: M) => Promise<any> | any
+  afterHook: (instances: M[]) => Promise<any> | any
 ): RequestHandler => async (req, res, next) => {
   try {
     const { range, sort, filter } = req.query;
@@ -69,7 +72,7 @@ const getList = <M extends Model>(
     });
 
     res.set("Content-Range", `${from}-${from + rows.length}/${count}`);
-    res.json(await Promise.all(rows.map(row => toJson(row as M))));
+    res.json(await afterHook(rows as M[]));
   } catch (error) {
     next(error);
   }
@@ -77,7 +80,7 @@ const getList = <M extends Model>(
 
 const getOne = <M extends Model>(
   model: { new (): M } & typeof Model,
-  toJson: (instance: M) => Promise<any> | any
+  afterHook: (instance: M) => Promise<any> | any
 ): RequestHandler => async (req, res, next) => {
   try {
     const record = await model.findByPk(req.params.id, {
@@ -87,7 +90,7 @@ const getOne = <M extends Model>(
     if (!record) {
       return res.status(404).json({ error: "Record not found" });
     }
-    res.json(await toJson(record as M));
+    res.json(await afterHook(record as M));
   } catch (error) {
     next(error);
   }

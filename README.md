@@ -29,7 +29,11 @@ import { User } from "./models";
 import crud, { ActionType } from "ra-express-sequelize-backend";
 
 const app = new express();
-app.use(crud("/admin/users", User, [ActionType.GET_LIST, ActionType.GET_ONE]));
+app.use(
+  crud("/admin/users", User, {
+    actionTypes: [ActionType.GET_LIST, ActionType.GET_ONE]
+  })
+);
 ```
 
 You can alter what is served with a mapping function (possibly async):
@@ -41,11 +45,10 @@ import crud, { ActionType } from "ra-express-sequelize-backend";
 
 const app = new express();
 app.use(
-  crud(
-    "/admin/users",
-    User,
-    [ActionType.GET_LIST, ActionType.GET_ONE],
-    user => ({ ...user, foo: "bar" })
-  )
+  crud("/admin/users", User, {
+    actionTypes: [ActionType.GET_LIST, ActionType.GET_ONE],
+    afterGetOne: user => ({ ...user, foo: "bar" }),
+    afterGetList: users => users.map(user => ({ ...user, foo: "bar" }))
+  })
 );
 ```

@@ -7,7 +7,9 @@ describe("crud", () => {
     expect.assertions(1);
 
     try {
-      await setupApp(crud("/users", User, ["GEET_LIST" as any]));
+      await setupApp(
+        crud("/users", User, { actionTypes: ["GEET_LIST" as any] })
+      );
     } catch (error) {
       expect(error.message).toEqual("Unknown action type GEET_LIST");
     }
@@ -16,7 +18,7 @@ describe("crud", () => {
   it("should not setup a non-specified action", async () => {
     expect.assertions(1);
     const [dataProvider, server] = await setupApp(
-      crud("/users", User, [ActionType.GET_LIST])
+      crud("/users", User, { actionTypes: [ActionType.GET_LIST] })
     );
 
     try {
@@ -81,10 +83,14 @@ describe("crud", () => {
 
       it("should handle toJson", async () => {
         const [dataProvider, server] = await setupApp(
-          crud("/users", User, Object.values(ActionType), ({ id, name }) => ({
-            id,
-            firstName: name
-          }))
+          crud("/users", User, {
+            actionTypes: Object.values(ActionType),
+            afterGetList: items =>
+              items.map(({ id, name }) => ({
+                id,
+                firstName: name
+              }))
+          })
         );
 
         findAndCountAll.mockResolvedValue({
@@ -141,10 +147,13 @@ describe("crud", () => {
 
       it("should handle toJson", async () => {
         const [dataProvider, server] = await setupApp(
-          crud("/users", User, Object.values(ActionType), ({ id, name }) => ({
-            id,
-            firstName: name
-          }))
+          crud("/users", User, {
+            actionTypes: Object.values(ActionType),
+            afterGetOne: ({ id, name }) => ({
+              id,
+              firstName: name
+            })
+          })
         );
 
         findByPk.mockResolvedValue({ id: 1, name: "Éloi" } as User);
