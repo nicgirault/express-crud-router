@@ -84,7 +84,6 @@ describe("crud", () => {
       it("should handle toJson", async () => {
         const [dataProvider, server] = await setupApp(
           crud("/users", User, {
-            actionTypes: Object.values(ActionType),
             afterGetList: items =>
               items.map(({ id, name }) => ({
                 id,

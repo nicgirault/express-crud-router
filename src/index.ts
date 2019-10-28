@@ -78,7 +78,7 @@ const getList = <M extends Model>(
 
     const afterHookRows = await afterHook(rows as M[]);
 
-    res.json(Promise.all(afterHookRows.map(toJson)));
+    res.json(await Promise.all(afterHookRows.map(toJson)));
   } catch (error) {
     next(error);
   }
