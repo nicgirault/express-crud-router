@@ -13,8 +13,8 @@ export enum ActionType {
 interface Options {
   actionTypes: ActionType[];
   toJson: (data: any) => any;
-  afterGetList: (data: any[]) => any[];
-  beforeWrite: (data: any) => any;
+  afterGetList: (data: any[]) => Promise<any[]> | any[];
+  beforeWrite: (data: any) => Promise<any> | any;
 }
 
 export const crud = <M extends Model>(
