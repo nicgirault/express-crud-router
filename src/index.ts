@@ -12,8 +12,8 @@ export enum ActionType {
 
 interface Options<Attributes> {
   actionTypes: ActionType[];
+  toJson: (data: Attributes) => any;
   afterGetList: (data: Attributes[]) => any[];
-  afterGetOne: (data: Attributes) => any;
   beforeWrite: (data: any) => any;
 }
 
@@ -24,7 +24,7 @@ export const crud = <M extends Model>(
 ) => {
   const actionTypes =
     (options && options.actionTypes) || Object.values(ActionType);
-  const afterGetOne = (options && options.afterGetOne) || (data => data);
+  const toJson = (options && options.toJson) || (data => data);
   const afterGetList = (options && options.afterGetList) || (data => data);
   const beforeWrite = (options && options.beforeWrite) || (data => data);
 
@@ -35,16 +35,16 @@ export const crud = <M extends Model>(
   for (const actionType of actionTypes) {
     switch (actionType) {
       case ActionType.GET_LIST:
-        router.get(resource, getList(model, afterGetList));
+        router.get(resource, getList(model, afterGetList, toJson));
         break;
       case ActionType.GET_ONE:
-        router.get(`${resource}/:id`, getOne(model, afterGetOne));
+        router.get(`${resource}/:id`, getOne(model, toJson));
         break;
       case ActionType.CREATE:
-        router.post(resource, create(model, beforeWrite));
+        router.post(resource, create(model, beforeWrite, toJson));
         break;
       case ActionType.UPDATE:
-        router.put(`${resource}/:id`, update(model, beforeWrite));
+        router.put(`${resource}/:id`, update(model, beforeWrite, toJson));
         break;
       case ActionType.DELETE:
         router.delete(`${resource}/:id`, destroy(model));
@@ -58,7 +58,8 @@ export const crud = <M extends Model>(
 
 const getList = <M extends Model>(
   model: { new (): M } & typeof Model,
-  afterHook: (instances: M[]) => Promise<any> | any
+  afterHook: (instances: M[]) => Promise<any> | any,
+  toJson: (data: any) => Promise<any> | any
 ): RequestHandler => async (req, res, next) => {
   try {
     const { range, sort, filter } = req.query;
@@ -74,7 +75,10 @@ const getList = <M extends Model>(
     });
 
     res.set("Content-Range", `${from}-${from + rows.length}/${count}`);
-    res.json(await afterHook(rows as M[]));
+
+    const afterHookRows = await afterHook(rows as M[]);
+
+    res.json(Promise.all(afterHookRows.map(toJson)));
   } catch (error) {
     next(error);
   }
@@ -100,13 +104,14 @@ const getOne = <M extends Model>(
 
 const create = <M extends Model>(
   model: { new (): M } & typeof Model,
-  beforeWrite: (data: any) => any
+  beforeWrite: (data: any) => any,
+  toJson: (data: any) => any
 ): RequestHandler => async (req, res, next) => {
   try {
     const record = await model.create(await beforeWrite(req.body), {
       raw: true
     });
-    res.status(201).json(record);
+    res.status(201).json(await toJson(record));
   } catch (error) {
     next(error);
   }
@@ -114,7 +119,8 @@ const create = <M extends Model>(
 
 const update = <M extends Model>(
   model: { new (): M } & typeof Model,
-  beforeWrite: (data: any) => any
+  beforeWrite: (data: any) => any,
+  toJson: (data: any) => any
 ): RequestHandler => async (req, res, next) => {
   try {
     const record = await model.findByPk(req.params.id);
@@ -122,12 +128,13 @@ const update = <M extends Model>(
     if (!record) {
       return res.status(404).json({ error: "Record not found" });
     }
-    res.json(
-      await model.update(await beforeWrite(req.body), {
-        where: { id: req.params.id },
-        returning: true
-      })
-    );
+
+    const updatedRecord = await model.update(await beforeWrite(req.body), {
+      where: { id: req.params.id },
+      returning: true
+    });
+
+    res.json(await toJson(updatedRecord));
   } catch (error) {
     next(error);
   }

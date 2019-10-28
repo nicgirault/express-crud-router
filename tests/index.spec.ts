@@ -149,7 +149,7 @@ describe("crud", () => {
         const [dataProvider, server] = await setupApp(
           crud("/users", User, {
             actionTypes: Object.values(ActionType),
-            afterGetOne: ({ id, name }) => ({
+            toJson: ({ id, name }) => ({
               id,
               firstName: name
             })
