@@ -160,7 +160,10 @@ const appendHeaders: RequestHandler = (req, res, next) => {
     if (typeof rawValue !== "string") {
       return next();
     }
-    const headers = rawValue.split(",").map(header => header.trim());
+    const headers = rawValue
+      .split(",")
+      .map(header => header.trim())
+      .filter(header => Boolean(header));
     if (!headers.includes("Content-Range")) {
       headers.push("Content-Range");
     }
