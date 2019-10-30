@@ -114,14 +114,18 @@ describe("crud", () => {
         });
       });
 
-      it("should handle toJson", async () => {
+      it("should handle hooks", async () => {
         const [dataProvider, server] = await setupApp(
           crud("/users", User, {
-            afterGetList: items =>
-              items.map(({ id, name }) => ({
-                id,
-                firstName: name
-              }))
+            hooks: {
+              [Action.GET_LIST]: {
+                after: items =>
+                  items.map(({ id, name }) => ({
+                    id,
+                    firstName: name
+                  }))
+              }
+            }
           })
         );
 
@@ -177,14 +181,18 @@ describe("crud", () => {
         }
       });
 
-      it("should handle toJson", async () => {
+      it("should handle hooks", async () => {
         const [dataProvider, server] = await setupApp(
           crud("/users", User, {
             actions: Object.values(Action),
-            toJson: ({ id, name }) => ({
-              id,
-              firstName: name
-            })
+            hooks: {
+              [Action.GET_ONE]: {
+                after: ({ id, name }) => ({
+                  id,
+                  firstName: name
+                })
+              }
+            }
           })
         );
 
@@ -224,13 +232,17 @@ describe("crud", () => {
         );
       });
 
-      it("should call create with the result of beforeWrite hook", async () => {
+      it("should call create with the result of before hook", async () => {
         const [dataProvider, server] = await setupApp(
           crud("/users", User, {
-            beforeWrite: async ({ firstName, ...rest }) => ({
-              ...rest,
-              name: firstName
-            })
+            hooks: {
+              [Action.CREATE]: {
+                before: async ({ firstName, ...rest }) => ({
+                  ...rest,
+                  name: firstName
+                })
+              }
+            }
           })
         );
         create.mockResolvedValue({ id: 1 } as any);

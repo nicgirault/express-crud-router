@@ -46,22 +46,27 @@ app.use(
 ```ts
 import express from "express";
 import { User } from "./models";
-import crud from "ra-express-sequelize-backend";
+import crud, { Action } from "ra-express-sequelize-backend";
 
 const app = new express();
 app.use(
   crud("/admin/users", User, {
-    // in order of call (these functions can return a promise)
-
-    // called for CREATE and UPDATE actions with req.body
-    beforeWrite: user => ({ ...user, foo: "bar" }),
-
-    // called for GET_LIST with the list of records fetched
-    afterGetList: users => users.map(user => ({ ...user, foo: "bar" }))
-
-    // called for GET_LIST, GET_ONE, CREATE, UPDATE
-    // in the case of GET_LIST, it receives the result of `afterGetList`
-    toJson: user => ({ ...user, foo: "bar" }),
+    hooks: {
+      [Action.GET_LIST]: {
+        after: async records => doSomething(records)
+      },
+      [Action.GET_ONE]: {
+        after: async record => doSomething(record)
+      },
+      [Action.CREATE]: {
+        before: async body => doSomething(body),
+        after: async record => doSomething(record)
+      },
+      [Action.UPDATE]: {
+        before: async body => doSomething(body),
+        after: async record => doSomething(record)
+      }
+    }
   })
 );
 ```
