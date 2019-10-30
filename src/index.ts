@@ -35,7 +35,7 @@ interface Options {
 }
 
 export const crud = <M extends Model>(
-  resource: string,
+  path: string,
   model: { new (): M } & typeof Model,
   options?: Partial<Options>
 ) => {
@@ -49,7 +49,7 @@ export const crud = <M extends Model>(
     switch (action) {
       case Action.GET_LIST:
         router.get(
-          resource,
+          path,
           getList(
             model,
             options && options.hooks && options.hooks[Action.GET_LIST]
@@ -58,7 +58,7 @@ export const crud = <M extends Model>(
         break;
       case Action.GET_ONE:
         router.get(
-          `${resource}/:id`,
+          `${path}/:id`,
           getOne(
             model,
             options && options.hooks && options.hooks[Action.GET_ONE]
@@ -67,7 +67,7 @@ export const crud = <M extends Model>(
         break;
       case Action.CREATE:
         router.post(
-          resource,
+          path,
           create(
             model,
             options && options.hooks && options.hooks[Action.CREATE]
@@ -76,7 +76,7 @@ export const crud = <M extends Model>(
         break;
       case Action.UPDATE:
         router.put(
-          `${resource}/:id`,
+          `${path}/:id`,
           update(
             model,
             options && options.hooks && options.hooks[Action.UPDATE]
@@ -84,7 +84,7 @@ export const crud = <M extends Model>(
         );
         break;
       case Action.DELETE:
-        router.delete(`${resource}/:id`, destroy(model));
+        router.delete(`${path}/:id`, destroy(model));
         break;
       default:
         throw new Error(`Unknown action type ${action}`);
