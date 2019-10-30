@@ -1,9 +1,9 @@
 {
   "name": "ra-express-sequelize-backend",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "description": "React Admin backend with Express and Sequelize. 1 line per resource!",
   "main": "./lib/index.js",
-  "types": "./lib/main.d.ts",
+  "types": "./lib/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lalalilo/ra-express-sequelize-backend.git"
@@ -67,8 +67,8 @@
     "typescript": "^3.6.4"
   },
   "peerDependencies": {
-    "express": "^4.17.1",
-    "sequelize": "^5.21.1"
+    "express": "^4.0.0",
+    "sequelize": "^5.0.0"
   },
   "jest": {
     "setupFiles": [
