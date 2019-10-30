@@ -2,7 +2,7 @@ import { Router, RequestHandler } from "express";
 import * as bodyParser from "body-parser";
 import { Model } from "sequelize";
 
-export enum ActionType {
+export enum Action {
   GET_LIST = "GET_LIST",
   GET_ONE = "GET_ONE",
   CREATE = "CREATE",
@@ -11,7 +11,8 @@ export enum ActionType {
 }
 
 interface Options {
-  actionTypes: ActionType[];
+  actions: Action[];
+  disabledActions: Action[];
   toJson: (data: any) => any;
   afterGetList: (data: any[]) => Promise<any[]> | any[];
   beforeWrite: (data: any) => Promise<any> | any;
@@ -22,8 +23,7 @@ export const crud = <M extends Model>(
   model: { new (): M } & typeof Model,
   options?: Partial<Options>
 ) => {
-  const actionTypes =
-    (options && options.actionTypes) || Object.values(ActionType);
+  const actions = getActions(options);
   const toJson = (options && options.toJson) || (data => data);
   const afterGetList = (options && options.afterGetList) || (data => data);
   const beforeWrite = (options && options.beforeWrite) || (data => data);
@@ -32,25 +32,25 @@ export const crud = <M extends Model>(
   router.use(bodyParser.json());
   router.use(appendHeaders);
 
-  for (const actionType of actionTypes) {
-    switch (actionType) {
-      case ActionType.GET_LIST:
+  for (const action of actions) {
+    switch (action) {
+      case Action.GET_LIST:
         router.get(resource, getList(model, afterGetList, toJson));
         break;
-      case ActionType.GET_ONE:
+      case Action.GET_ONE:
         router.get(`${resource}/:id`, getOne(model, toJson));
         break;
-      case ActionType.CREATE:
+      case Action.CREATE:
         router.post(resource, create(model, beforeWrite, toJson));
         break;
-      case ActionType.UPDATE:
+      case Action.UPDATE:
         router.put(`${resource}/:id`, update(model, beforeWrite, toJson));
         break;
-      case ActionType.DELETE:
+      case Action.DELETE:
         router.delete(`${resource}/:id`, destroy(model));
         break;
       default:
-        throw new Error(`Unknown action type ${actionType}`);
+        throw new Error(`Unknown action type ${action}`);
     }
   }
   return router;
@@ -149,6 +149,20 @@ const destroy = <M extends Model>(
   } catch (error) {
     next(error);
   }
+};
+
+const getActions = (options?: Partial<Options>) => {
+  if (!options) {
+    return Object.values(Action);
+  }
+  if (options.disabledActions) {
+    const disabledActions = new Set(options.disabledActions);
+    return Object.values(Action).filter(action => !disabledActions.has(action));
+  }
+  if (options.actions) {
+    return options.actions;
+  }
+  return Object.values(Action);
 };
 
 const appendHeaders: RequestHandler = (req, res, next) => {

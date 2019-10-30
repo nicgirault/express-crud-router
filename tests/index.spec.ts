@@ -1,4 +1,4 @@
-import { crud, ActionType } from "../src";
+import { crud, Action } from "../src";
 import { User } from "./User";
 import { setupApp } from "./app";
 
@@ -7,9 +7,7 @@ describe("crud", () => {
     expect.assertions(1);
 
     try {
-      await setupApp(
-        crud("/users", User, { actionTypes: ["GEET_LIST" as any] })
-      );
+      await setupApp(crud("/users", User, { actions: ["GEET_LIST" as any] }));
     } catch (error) {
       expect(error.message).toEqual("Unknown action type GEET_LIST");
     }
@@ -18,11 +16,46 @@ describe("crud", () => {
   it("should not setup a non-specified action", async () => {
     expect.assertions(1);
     const [dataProvider, server] = await setupApp(
-      crud("/users", User, { actionTypes: [ActionType.GET_LIST] })
+      crud("/users", User, { actions: [Action.GET_LIST] })
     );
 
     try {
-      await dataProvider(ActionType.GET_ONE, "users", {
+      await dataProvider(Action.GET_ONE, "users", {
+        id: 1
+      });
+    } catch (error) {
+      expect(error.message).toEqual("Not Found");
+      server.close();
+    }
+  });
+
+  it("should not setup a disabled action", async () => {
+    expect.assertions(1);
+    const [dataProvider, server] = await setupApp(
+      crud("/users", User, { disabledActions: [Action.GET_ONE] })
+    );
+
+    try {
+      await dataProvider(Action.GET_ONE, "users", {
+        id: 1
+      });
+    } catch (error) {
+      expect(error.message).toEqual("Not Found");
+      server.close();
+    }
+  });
+
+  it("should not setup a disabled action even if the action is listed", async () => {
+    expect.assertions(1);
+    const [dataProvider, server] = await setupApp(
+      crud("/users", User, {
+        disabledActions: [Action.GET_ONE],
+        actions: [Action.GET_ONE]
+      })
+    );
+
+    try {
+      await dataProvider(Action.GET_ONE, "users", {
         id: 1
       });
     } catch (error) {
@@ -64,7 +97,7 @@ describe("crud", () => {
           rows: rows as User[]
         });
 
-        const response = await ctx.dataProvider(ActionType.GET_LIST, "users", {
+        const response = await ctx.dataProvider(Action.GET_LIST, "users", {
           pagination: { page: 3, perPage: 5 },
           sort: { field: "name", order: "DESC" },
           filter: {}
@@ -99,7 +132,7 @@ describe("crud", () => {
             .map((_, index) => ({ id: index, name: `name ${index}` })) as User[]
         });
 
-        const response = await dataProvider(ActionType.GET_LIST, "users", {
+        const response = await dataProvider(Action.GET_LIST, "users", {
           pagination: { page: 3, perPage: 5 },
           sort: { field: "name", order: "DESC" },
           filter: {}
@@ -120,7 +153,7 @@ describe("crud", () => {
       it("should call findByPk with the provided id", async () => {
         findByPk.mockResolvedValue({ id: 1, name: "Éloi" } as User);
 
-        const response = await ctx.dataProvider(ActionType.GET_ONE, "users", {
+        const response = await ctx.dataProvider(Action.GET_ONE, "users", {
           id: 1
         });
 
@@ -136,7 +169,7 @@ describe("crud", () => {
         findByPk.mockResolvedValue(null);
 
         try {
-          await ctx.dataProvider(ActionType.GET_ONE, "users", {
+          await ctx.dataProvider(Action.GET_ONE, "users", {
             id: 1
           });
         } catch (error) {
@@ -147,7 +180,7 @@ describe("crud", () => {
       it("should handle toJson", async () => {
         const [dataProvider, server] = await setupApp(
           crud("/users", User, {
-            actionTypes: Object.values(ActionType),
+            actions: Object.values(Action),
             toJson: ({ id, name }) => ({
               id,
               firstName: name
@@ -157,7 +190,7 @@ describe("crud", () => {
 
         findByPk.mockResolvedValue({ id: 1, name: "Éloi" } as User);
 
-        const response = await dataProvider(ActionType.GET_ONE, "users", {
+        const response = await dataProvider(Action.GET_ONE, "users", {
           id: 1
         });
 
@@ -176,7 +209,7 @@ describe("crud", () => {
       it("should call create", async () => {
         create.mockResolvedValue({ id: 1 } as any);
 
-        const response = await ctx.dataProvider(ActionType.CREATE, "users", {
+        const response = await ctx.dataProvider(Action.CREATE, "users", {
           data: {
             name: "Éloi"
           }
@@ -202,7 +235,7 @@ describe("crud", () => {
         );
         create.mockResolvedValue({ id: 1 } as any);
 
-        const response = await dataProvider(ActionType.CREATE, "users", {
+        const response = await dataProvider(Action.CREATE, "users", {
           data: {
             firstName: "Éloi"
           }
@@ -232,7 +265,7 @@ describe("crud", () => {
         findByPk.mockResolvedValue({ id: 1, name: "Éloi" } as any);
         update.mockResolvedValue({ id: 1, name: "Éloi" } as any);
 
-        const response = await ctx.dataProvider(ActionType.UPDATE, "users", {
+        const response = await ctx.dataProvider(Action.UPDATE, "users", {
           id: 1,
           data: {
             name: "Éloi"
@@ -257,7 +290,7 @@ describe("crud", () => {
         findByPk.mockResolvedValue(null);
 
         try {
-          await ctx.dataProvider(ActionType.UPDATE, "users", {
+          await ctx.dataProvider(Action.UPDATE, "users", {
             id: 1,
             data: {
               name: "Éloi"
@@ -279,7 +312,7 @@ describe("crud", () => {
       it("should call destroy", async () => {
         destroy.mockResolvedValue(null);
 
-        const response = await ctx.dataProvider(ActionType.DELETE, "users", {
+        const response = await ctx.dataProvider(Action.DELETE, "users", {
           id: 1
         });
 

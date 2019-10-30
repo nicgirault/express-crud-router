@@ -28,12 +28,15 @@ app.use(crud("/admin/users", User));
 ```ts
 import express from "express";
 import { User } from "./models";
-import crud, { ActionType } from "ra-express-sequelize-backend";
+import crud, { Action } from "ra-express-sequelize-backend";
 
 const app = new express();
 app.use(
   crud("/admin/users", User, {
-    actionTypes: [ActionType.GET_LIST, ActionType.GET_ONE]
+    actions: [Action.GET_LIST, Action.GET_ONE]
+
+    // or list disabled actions (this option override the action option)
+    disabledActions: [Action.DELETE]
   })
 );
 ```
