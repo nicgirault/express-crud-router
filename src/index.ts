@@ -166,17 +166,12 @@ const update = <M extends Model>(
       return res.status(404).json({ error: "Record not found" });
     }
 
-    const updatedRecord = await model.update(
-      hooks && hooks.before ? await hooks.before(req.body) : req.body,
-      {
-        where: { id: req.params.id },
-        returning: true
-      }
-    );
+    const data =
+      hooks && hooks.before ? await hooks.before(req.body) : req.body;
 
-    res.json(
-      hooks && hooks.after ? await hooks.after(updatedRecord) : updatedRecord
-    );
+    await record.update(data);
+
+    res.json(hooks && hooks.after ? await hooks.after(data) : data);
   } catch (error) {
     next(error);
   }

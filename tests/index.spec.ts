@@ -265,17 +265,19 @@ describe("crud", () => {
     });
 
     describe("UPDATE", () => {
-      const update = jest.spyOn(User, "update");
       const findByPk = jest.spyOn(User, "findByPk");
 
       beforeEach(() => {
-        update.mockReset();
         findByPk.mockReset();
       });
 
       it("should call update", async () => {
-        findByPk.mockResolvedValue({ id: 1, name: "Éloi" } as any);
-        update.mockResolvedValue({ id: 1, name: "Éloi" } as any);
+        const record = {
+          id: 1,
+          name: "Éloi",
+          update: jest.fn().mockResolvedValue(null)
+        };
+        findByPk.mockResolvedValue(record as any);
 
         const response = await ctx.dataProvider(Action.UPDATE, "users", {
           id: 1,
@@ -284,16 +286,8 @@ describe("crud", () => {
           }
         });
 
-        expect(response.data).toEqual({ id: 1, name: "Éloi" });
-        expect(update).toHaveBeenCalledWith(
-          { name: "Éloi" },
-          {
-            where: {
-              id: "1"
-            },
-            returning: true
-          }
-        );
+        expect(response.data).toEqual({ name: "Éloi" });
+        expect(record.update).toHaveBeenCalledWith({ name: "Éloi" });
       });
 
       it("should throw a 404 if record is not found", async () => {
