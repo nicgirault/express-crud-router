@@ -1,6 +1,6 @@
 import { Router, RequestHandler } from "express";
 import * as bodyParser from "body-parser";
-import { Model } from "sequelize";
+import { Model, Op, WhereAttributeHash } from "sequelize";
 
 export enum Action {
   GET_LIST = "GET_LIST",
@@ -106,7 +106,7 @@ const getList = <M extends Model>(
       offset: from,
       limit: to - from + 1,
       order: [sort ? JSON.parse(sort) : ["id", "ASC"]],
-      where: filter ? JSON.parse(filter) : {},
+      where: filter ? parseFilter(filter) : {},
       raw: true
     });
 
@@ -224,3 +224,26 @@ const appendHeaders: RequestHandler = (req, res, next) => {
 };
 
 export default crud;
+
+export const parseFilter = (filter: string): WhereAttributeHash => {
+  const filters = JSON.parse(filter);
+  return Object.keys(filters)
+    .map(key =>
+      filters[key].indexOf("%") !== -1
+        ? {
+            [key]: {
+              [Op.like]: filters[key]
+            }
+          }
+        : {
+            [key]: filters[key]
+          }
+    )
+    .reduce(
+      (filters, currentFilter) => ({
+        ...filters,
+        ...currentFilter
+      }),
+      {}
+    );
+};

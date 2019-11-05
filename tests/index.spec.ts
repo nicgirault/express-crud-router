@@ -1,4 +1,6 @@
-import { crud, Action } from "../src";
+import { Op } from "sequelize";
+
+import { crud, ActionType, parseFilter } from "../src";
 import { User } from "./User";
 import { setupApp } from "./app";
 
@@ -326,5 +328,21 @@ describe("crud", () => {
         expect(destroy).toHaveBeenCalledWith({ where: { id: "1" } });
       });
     });
+  });
+});
+
+describe("parseFilter", () => {
+  it("should return a WhereAttributeHash", () => {
+    const filters = ["{}", '{"email":"%lalilo.com"}'];
+    const parsedFilters = filters.map(filter => parseFilter(filter));
+
+    expect(parsedFilters).toEqual([
+      {},
+      {
+        email: {
+          [Op.like]: "%lalilo.com"
+        }
+      }
+    ]);
   });
 });
