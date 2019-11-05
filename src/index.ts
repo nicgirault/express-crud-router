@@ -18,8 +18,13 @@ interface GetOneHooks {
   after: (data: any) => Promise<any> | any
 }
 
-interface WriteHooks {
+interface CreateHooks {
   before?: (data: any) => Promise<any> | any
+  after?: (data: any) => Promise<any> | any
+}
+
+interface UpdateHooks {
+  before?: (data: any, record: any) => Promise<any> | any
   after?: (data: any) => Promise<any> | any
 }
 
@@ -29,8 +34,8 @@ interface Options {
   hooks: Partial<{
     [Action.GET_LIST]: GetListHooks
     [Action.GET_ONE]: GetOneHooks
-    [Action.UPDATE]: WriteHooks
-    [Action.CREATE]: WriteHooks
+    [Action.UPDATE]: UpdateHooks
+    [Action.CREATE]: CreateHooks
   }>
 }
 
@@ -138,7 +143,7 @@ const getOne = <M extends Model>(
 
 const create = <M extends Model>(
   model: { new (): M } & typeof Model,
-  hooks?: WriteHooks
+  hooks?: CreateHooks
 ): RequestHandler => async (req, res, next) => {
   try {
     const record = await model.create(
@@ -157,18 +162,19 @@ const create = <M extends Model>(
 
 const update = <M extends Model>(
   model: { new (): M } & typeof Model,
-  hooks?: WriteHooks
+  hooks?: UpdateHooks
 ): RequestHandler => async (req, res, next) => {
   try {
-    const record = await model.findByPk(req.params.id)
+    const record = await model.findByPk(req.params.id, { raw: true })
 
     if (!record) {
       return res.status(404).json({ error: 'Record not found' })
     }
 
-    const data = hooks && hooks.before ? await hooks.before(req.body) : req.body
+    const data =
+      hooks && hooks.before ? await hooks.before(req.body, record) : req.body
 
-    await record.update(data)
+    await model.update(data, { where: { id: req.params.id } })
 
     res.json(hooks && hooks.after ? await hooks.after(data) : data)
   } catch (error) {
