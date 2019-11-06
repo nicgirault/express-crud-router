@@ -1,6 +1,6 @@
 import { Router, RequestHandler } from 'express'
 import * as bodyParser from 'body-parser'
-import { Model, Op, WhereAttributeHash } from 'sequelize'
+import { Model, Op } from 'sequelize'
 
 export enum Action {
   GET_LIST = 'GET_LIST',
@@ -230,7 +230,7 @@ const appendHeaders: RequestHandler = (req, res, next) => {
 
 export default crud
 
-export const parseFilter = (filter: string): WhereAttributeHash => {
+export const parseFilter = (filter: string) => {
   const filters = JSON.parse(filter)
   return Object.keys(filters)
     .map(key => {
