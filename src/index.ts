@@ -23,18 +23,18 @@ interface CreateHooks {
   after?: (data: any) => Promise<any> | any
 }
 
-interface UpdateHooks {
-  before?: (data: any, record: any) => Promise<any> | any
+interface UpdateHooks<M extends Model> {
+  before?: (data: any, record: Model<M>) => Promise<any> | any
   after?: (data: any) => Promise<any> | any
 }
 
-interface Options {
+interface Options<M extends Model> {
   actions: Action[]
   disabledActions: Action[]
   hooks: Partial<{
     [Action.GET_LIST]: GetListHooks
     [Action.GET_ONE]: GetOneHooks
-    [Action.UPDATE]: UpdateHooks
+    [Action.UPDATE]: UpdateHooks<M>
     [Action.CREATE]: CreateHooks
   }>
 }
@@ -42,7 +42,7 @@ interface Options {
 export const crud = <M extends Model>(
   path: string,
   model: { new (): M } & typeof Model,
-  options?: Partial<Options>
+  options?: Partial<Options<M>>
 ) => {
   const actions = getActions(options)
 
@@ -162,7 +162,7 @@ const create = <M extends Model>(
 
 const update = <M extends Model>(
   model: { new (): M } & typeof Model,
-  hooks?: UpdateHooks
+  hooks?: UpdateHooks<M>
 ): RequestHandler => async (req, res, next) => {
   try {
     const record = await model.findByPk(req.params.id, { raw: true })
@@ -193,7 +193,7 @@ const destroy = <M extends Model>(
   }
 }
 
-const getActions = (options?: Partial<Options>) => {
+const getActions = <M extends Model>(options?: Partial<Options<M>>) => {
   if (!options) {
     return Object.values(Action)
   }
