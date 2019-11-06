@@ -227,21 +227,23 @@ export default crud
 export const parseFilter = (filter: string): WhereAttributeHash => {
   const filters = JSON.parse(filter)
   return Object.keys(filters)
-    .map(key =>
-      filters[key].indexOf('%') !== -1
-        ? {
-            [key]: {
-              [Op.like]: filters[key],
-            },
-          }
-        : {
-            [key]: filters[key],
-          }
-    )
+    .map(key => {
+      if (
+        typeof filters[key] === 'string' &&
+        filters[key].indexOf('%') !== -1
+      ) {
+        return {
+          [key]: { [Op.like]: filters[key] },
+        }
+      }
+      return {
+        [key]: filters[key],
+      }
+    })
     .reduce(
-      (filters, currentFilter) => ({
-        ...filters,
-        ...currentFilter,
+      (whereAttributes, whereAttribute) => ({
+        ...whereAttributes,
+        ...whereAttribute,
       }),
       {}
     )

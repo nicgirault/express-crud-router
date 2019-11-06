@@ -335,6 +335,7 @@ describe('crud', () => {
 describe('parseFilter', () => {
   it.each([
     ['{}', {}],
+    ['{"level": 5}', { level: 5 }],
     ['{"name": "Steve"}', { name: 'Steve' }],
     [
       '{"email":"%lalilo.com"}',
