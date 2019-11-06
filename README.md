@@ -63,7 +63,7 @@ app.use(
         after: async record => doSomething(record)
       },
       [Action.UPDATE]: {
-        before: async body => doSomething(body),
+        before: async (body, record) => doSomething(body, record),
         after: async record => doSomething(record)
       }
     }

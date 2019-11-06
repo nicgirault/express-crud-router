@@ -269,16 +269,17 @@ describe('crud', () => {
 
     describe('UPDATE', () => {
       const findByPk = jest.spyOn(User, 'findByPk')
+      const update = jest.spyOn(User, 'update').mockResolvedValue(null)
 
       beforeEach(() => {
         findByPk.mockReset()
+        update.mockReset()
       })
 
       it('should call update', async () => {
         const record = {
           id: 1,
           name: 'Éloi',
-          update: jest.fn().mockResolvedValue(null),
         }
         findByPk.mockResolvedValue(record as any)
 
@@ -290,7 +291,10 @@ describe('crud', () => {
         })
 
         expect(response.data).toEqual({ name: 'Éloi' })
-        expect(record.update).toHaveBeenCalledWith({ name: 'Éloi' })
+        expect(update).toHaveBeenCalledWith(
+          { name: 'Éloi' },
+          { where: { id: '1' } }
+        )
       })
 
       it('should throw a 404 if record is not found', async () => {

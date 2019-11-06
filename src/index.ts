@@ -18,26 +18,31 @@ interface GetOneHooks {
   after: (data: any) => Promise<any> | any
 }
 
-interface WriteHooks {
+interface CreateHooks {
   before?: (data: any) => Promise<any> | any
   after?: (data: any) => Promise<any> | any
 }
 
-interface Options {
+interface UpdateHooks<M extends Model> {
+  before?: (data: any, record: Model<M>) => Promise<any> | any
+  after?: (data: any) => Promise<any> | any
+}
+
+interface Options<M extends Model> {
   actions: Action[]
   disabledActions: Action[]
   hooks: Partial<{
     [Action.GET_LIST]: GetListHooks
     [Action.GET_ONE]: GetOneHooks
-    [Action.UPDATE]: WriteHooks
-    [Action.CREATE]: WriteHooks
+    [Action.UPDATE]: UpdateHooks<M>
+    [Action.CREATE]: CreateHooks
   }>
 }
 
 export const crud = <M extends Model>(
   path: string,
   model: { new (): M } & typeof Model,
-  options?: Partial<Options>
+  options?: Partial<Options<M>>
 ) => {
   const actions = getActions(options)
 
@@ -138,7 +143,7 @@ const getOne = <M extends Model>(
 
 const create = <M extends Model>(
   model: { new (): M } & typeof Model,
-  hooks?: WriteHooks
+  hooks?: CreateHooks
 ): RequestHandler => async (req, res, next) => {
   try {
     const record = await model.create(
@@ -157,18 +162,19 @@ const create = <M extends Model>(
 
 const update = <M extends Model>(
   model: { new (): M } & typeof Model,
-  hooks?: WriteHooks
+  hooks?: UpdateHooks<M>
 ): RequestHandler => async (req, res, next) => {
   try {
-    const record = await model.findByPk(req.params.id)
+    const record = await model.findByPk(req.params.id, { raw: true })
 
     if (!record) {
       return res.status(404).json({ error: 'Record not found' })
     }
 
-    const data = hooks && hooks.before ? await hooks.before(req.body) : req.body
+    const data =
+      hooks && hooks.before ? await hooks.before(req.body, record) : req.body
 
-    await record.update(data)
+    await model.update(data, { where: { id: req.params.id } })
 
     res.json(hooks && hooks.after ? await hooks.after(data) : data)
   } catch (error) {
@@ -187,7 +193,7 @@ const destroy = <M extends Model>(
   }
 }
 
-const getActions = (options?: Partial<Options>) => {
+const getActions = <M extends Model>(options?: Partial<Options<M>>) => {
   if (!options) {
     return Object.values(Action)
   }
