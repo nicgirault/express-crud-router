@@ -92,7 +92,7 @@ describe('crud', () => {
       it('should handle pagination and sort', async () => {
         const rows = new Array(5)
           .fill(1)
-          .map((_, index) => ({ id: index, name: `name ${index}` }))
+          .map((_, index) => ({ id: index, email: `${index}@lalilo.com` }))
 
         findAndCountAll.mockResolvedValue({
           count: 300,
@@ -122,9 +122,9 @@ describe('crud', () => {
             hooks: {
               [Action.GET_LIST]: {
                 after: items =>
-                  items.map(({ id, name }) => ({
+                  items.map(({ id, email }) => ({
                     id,
-                    firstName: name,
+                    email,
                   })),
               },
             },
@@ -135,7 +135,7 @@ describe('crud', () => {
           count: 300,
           rows: new Array(5).fill(1).map((_, index) => ({
             id: index,
-            name: `name ${index}`,
+            email: `${index}@lalilo.com`,
           })) as User[],
         })
 
@@ -145,7 +145,7 @@ describe('crud', () => {
           filter: {},
         })
 
-        expect(response.data[0]).toEqual({ id: 0, firstName: 'name 0' })
+        expect(response.data[0]).toEqual({ id: 0, email: '0@lalilo.com' })
         server.close()
       })
     })
@@ -158,13 +158,13 @@ describe('crud', () => {
       })
 
       it('should call findByPk with the provided id', async () => {
-        findByPk.mockResolvedValue({ id: 1, name: 'Éloi' } as User)
+        findByPk.mockResolvedValue({ id: 1, email: 'eloi@lalilo.com' } as User)
 
         const response = await ctx.dataProvider(Action.GET_ONE, 'users', {
           id: 1,
         })
 
-        expect(response.data).toEqual({ id: 1, name: 'Éloi' })
+        expect(response.data).toEqual({ id: 1, email: 'eloi@lalilo.com' })
         expect(findByPk).toHaveBeenCalledWith('1', {
           raw: true,
         })
@@ -190,22 +190,22 @@ describe('crud', () => {
             actions: Object.values(Action),
             hooks: {
               [Action.GET_ONE]: {
-                after: ({ id, name }) => ({
+                after: ({ id, email }) => ({
                   id,
-                  firstName: name,
+                  email,
                 }),
               },
             },
           })
         )
 
-        findByPk.mockResolvedValue({ id: 1, name: 'Éloi' } as User)
+        findByPk.mockResolvedValue({ id: 1, email: 'eloi@lalilo.com' } as User)
 
         const response = await dataProvider(Action.GET_ONE, 'users', {
           id: 1,
         })
 
-        expect(response.data).toEqual({ id: 1, firstName: 'Éloi' })
+        expect(response.data).toEqual({ id: 1, email: 'eloi@lalilo.com' })
         server.close()
       })
     })

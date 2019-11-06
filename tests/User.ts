@@ -1,7 +1,6 @@
-import { Model } from "sequelize";
+import { Model } from 'sequelize'
 
 export class User extends Model {
-  public id!: number;
-  public name!: string;
-  public email!: string;
+  public id!: number
+  public email!: string
 }
