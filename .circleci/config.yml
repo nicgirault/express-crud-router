@@ -1,11 +1,13 @@
 version: 2
+
+defaults: &defaults
+  working_directory: ~/ra-express-sequelize-backend
+  docker:
+    - image: circleci/node:12
+
 jobs:
-  build:
-    docker:
-      - image: circleci/node:12
-
-    working_directory: ~/ra-express-sequelize-backend
-
+  test:
+    <<: *defaults
     steps:
       - checkout
 
@@ -35,3 +37,30 @@ jobs:
       - run:
           name: Code coverage
           command: npx codecov
+
+      - persist_to_workspace:
+          root: ~/ra-express-sequelize-backend
+          paths: .
+  deploy:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/ra-express-sequelize-backend
+      - run:
+          name: Authenticate with registry
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/ra-express-sequelize-backend/.npmrc
+      - run:
+          name: Publish package
+          command: yarn publish
+
+workflows:
+  version: 2
+  test-deploy:
+    jobs:
+      - test
+      - deploy:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /^v.*/

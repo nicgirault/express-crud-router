@@ -15,12 +15,12 @@ yarn add ra-express-sequelize-backend
 ### Simple use case
 
 ```ts
-import express from "express";
-import { User } from "./models";
-import crud from "ra-express-sequelize-backend";
+import express from 'express'
+import { User } from './models'
+import crud from 'ra-express-sequelize-backend'
 
-const app = new express();
-app.use(crud("/admin/users", User));
+const app = new express()
+app.use(crud('/admin/users', User))
 ```
 
 ### Limit actions
@@ -44,33 +44,41 @@ app.use(
 ### Hooks
 
 ```ts
-import express from "express";
-import { User } from "./models";
-import crud, { Action } from "ra-express-sequelize-backend";
+import express from 'express'
+import { User } from './models'
+import crud, { Action } from 'ra-express-sequelize-backend'
 
-const app = new express();
+const app = new express()
 app.use(
-  crud("/admin/users", User, {
+  crud('/admin/users', User, {
     hooks: {
       [Action.GET_LIST]: {
-        after: async records => doSomething(records)
+        after: async records => doSomething(records),
       },
       [Action.GET_ONE]: {
-        after: async record => doSomething(record)
+        after: async record => doSomething(record),
       },
       [Action.CREATE]: {
         before: async body => doSomething(body),
-        after: async record => doSomething(record)
+        after: async record => doSomething(record),
       },
       [Action.UPDATE]: {
         before: async (body, record) => doSomething(body, record),
-        after: async record => doSomething(record)
-      }
-    }
+        after: async record => doSomething(record),
+      },
+    },
   })
-);
+)
 ```
 
 ### Search
 
 We support React Admin searches that _contains_ a string. For instance you can search users with emails that end with _lalilo.com_ by prepending a `%` character: `%lalilo.com`.
+
+## contribute
+
+### How to publish a new version on npmjs.org
+
+- update the version in package.json
+- tag the commit `git tag -a vx.x.x`
+- push

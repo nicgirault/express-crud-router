@@ -1,6 +1,6 @@
 {
   "name": "ra-express-sequelize-backend",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "React Admin backend with Express and Sequelize. 1 line per resource!",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
