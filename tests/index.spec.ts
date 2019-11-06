@@ -333,18 +333,23 @@ describe('crud', () => {
 })
 
 describe('parseFilter', () => {
-  it('should return a WhereAttributeHash', () => {
-    const filters = ['{}', '{"name": "Steve"}', '{"email":"%lalilo.com"}']
-    const parsedFilters = filters.map(filter => parseFilter(filter))
-
-    expect(parsedFilters).toEqual([
-      {},
-      { name: 'Steve' },
+  it.each([
+    ['{}', {}],
+    ['{"name": "Steve"}', { name: 'Steve' }],
+    [
+      '{"email":"%lalilo.com"}',
       {
         email: {
           [Op.like]: '%lalilo.com',
         },
       },
-    ])
-  })
+    ],
+  ])(
+    'should return a WhereAttributeHash',
+    (filter: string, expectedParsedFilter) => {
+      const parsedFilter = parseFilter(filter)
+
+      expect(parsedFilter).toEqual(expectedParsedFilter)
+    }
+  )
 })
