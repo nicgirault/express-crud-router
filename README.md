@@ -70,3 +70,7 @@ app.use(
   })
 );
 ```
+
+### Search
+
+We support React Admin searches that _contains_ a string. For instance you can search users with emails that end with _lalilo.com_ by prepending a `%` character: `%lalilo.com`.
