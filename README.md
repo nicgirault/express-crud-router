@@ -1,6 +1,6 @@
 # express-sequelize-crud
 
-Backend for React Admin simple rest client for Express and Sequelize.
+Simply expose resource CRUD (Create Read Update Delete) routes for Express & Sequelize. Compatible with [React Admin Simple Rest Data Provider](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-simple-rest)
 
 [![codecov](https://codecov.io/gh/lalalilo/express-sequelize-crud/branch/master/graph/badge.svg)](https://codecov.io/gh/lalalilo/express-sequelize-crud) [![CircleCI](https://circleci.com/gh/lalalilo/express-sequelize-crud.svg?style=svg)](https://circleci.com/gh/lalalilo/express-sequelize-crud)
 
@@ -16,8 +16,8 @@ yarn add express-sequelize-crud
 
 ```ts
 import express from 'express'
-import { User } from './models'
 import crud from 'express-sequelize-crud'
+import { User } from './models'
 
 const app = new express()
 app.use(crud('/admin/users', User))
@@ -27,8 +27,8 @@ app.use(crud('/admin/users', User))
 
 ```ts
 import express from "express";
-import { User } from "./models";
 import crud, { Action } from "express-sequelize-crud";
+import { User } from "./models";
 
 const app = new express();
 app.use(
@@ -45,8 +45,8 @@ app.use(
 
 ```ts
 import express from 'express'
-import { User } from './models'
 import crud, { Action } from 'express-sequelize-crud'
+import { User } from './models'
 
 const app = new express()
 app.use(
