@@ -1,13 +1,13 @@
-# ra-express-sequelize-backend
+# express-sequelize-crud
 
 Backend for React Admin simple rest client for Express and Sequelize.
 
-[![codecov](https://codecov.io/gh/lalalilo/ra-express-sequelize-backend/branch/master/graph/badge.svg)](https://codecov.io/gh/lalalilo/ra-express-sequelize-backend) [![CircleCI](https://circleci.com/gh/lalalilo/ra-express-sequelize-backend.svg?style=svg)](https://circleci.com/gh/lalalilo/ra-express-sequelize-backend)
+[![codecov](https://codecov.io/gh/lalalilo/express-sequelize-crud/branch/master/graph/badge.svg)](https://codecov.io/gh/lalalilo/express-sequelize-crud) [![CircleCI](https://circleci.com/gh/lalalilo/express-sequelize-crud.svg?style=svg)](https://circleci.com/gh/lalalilo/express-sequelize-crud)
 
 ## Install
 
 ```
-yarn add ra-express-sequelize-backend
+yarn add express-sequelize-crud
 ```
 
 ## Usage
@@ -17,7 +17,7 @@ yarn add ra-express-sequelize-backend
 ```ts
 import express from 'express'
 import { User } from './models'
-import crud from 'ra-express-sequelize-backend'
+import crud from 'express-sequelize-crud'
 
 const app = new express()
 app.use(crud('/admin/users', User))
@@ -28,7 +28,7 @@ app.use(crud('/admin/users', User))
 ```ts
 import express from "express";
 import { User } from "./models";
-import crud, { Action } from "ra-express-sequelize-backend";
+import crud, { Action } from "express-sequelize-crud";
 
 const app = new express();
 app.use(
@@ -46,7 +46,7 @@ app.use(
 ```ts
 import express from 'express'
 import { User } from './models'
-import crud, { Action } from 'ra-express-sequelize-backend'
+import crud, { Action } from 'express-sequelize-crud'
 
 const app = new express()
 app.use(

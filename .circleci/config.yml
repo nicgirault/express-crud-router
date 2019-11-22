@@ -1,7 +1,7 @@
 version: 2
 
 defaults: &defaults
-  working_directory: ~/ra-express-sequelize-backend
+  working_directory: ~/express-sequelize-crud
   docker:
     - image: circleci/node:12
 
@@ -39,16 +39,16 @@ jobs:
           command: npx codecov
 
       - persist_to_workspace:
-          root: ~/ra-express-sequelize-backend
+          root: ~/express-sequelize-crud
           paths: .
   deploy:
     <<: *defaults
     steps:
       - attach_workspace:
-          at: ~/ra-express-sequelize-backend
+          at: ~/express-sequelize-crud
       - run:
           name: Authenticate with registry
-          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/ra-express-sequelize-backend/.npmrc
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/express-sequelize-crud/.npmrc
       - run:
           name: Publish package
           command: yarn publish
