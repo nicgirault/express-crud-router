@@ -116,6 +116,7 @@ const getList = <M extends Model>(
     })
 
     res.set('Content-Range', `${from}-${from + rows.length}/${count}`)
+    res.set('X-Total-Count', `${count}`)
 
     res.json(hooks ? await hooks.after(rows) : rows)
   } catch (error) {
@@ -218,6 +219,9 @@ const appendHeaders: RequestHandler = (req, res, next) => {
     .filter(header => Boolean(header))
   if (!headers.includes('Content-Range')) {
     headers.push('Content-Range')
+  }
+  if (!headers.includes('X-Total-Count')) {
+    headers.push('X-Total-Count')
   }
   res.header('Access-Control-Expose-Headers', headers.join(', '))
   next()
