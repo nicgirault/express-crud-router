@@ -208,23 +208,18 @@ const getActions = (options?: Partial<Options>) => {
 }
 
 const appendHeaders: RequestHandler = (req, res, next) => {
-  for (const name of [
-    'Access-Control-Expose-Headers',
-    'Access-Control-Allow-Headers',
-  ]) {
-    const rawValue = res.getHeader(name) || ''
-    if (typeof rawValue !== 'string') {
-      return next()
-    }
-    const headers = rawValue
-      .split(',')
-      .map(header => header.trim())
-      .filter(header => Boolean(header))
-    if (!headers.includes('Content-Range')) {
-      headers.push('Content-Range')
-    }
-    res.header(name, headers.join(', '))
+  const rawValue = res.getHeader('Access-Control-Expose-Headers') || ''
+  if (typeof rawValue !== 'string') {
+    return next()
   }
+  const headers = rawValue
+    .split(',')
+    .map(header => header.trim())
+    .filter(header => Boolean(header))
+  if (!headers.includes('Content-Range')) {
+    headers.push('Content-Range')
+  }
+  res.header('Access-Control-Expose-Headers', headers.join(', '))
   next()
 }
 
