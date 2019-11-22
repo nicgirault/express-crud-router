@@ -1,6 +1,6 @@
 {
   "name": "express-sequelize-crud",
-  "version": "3.1.2",
+  "version": "3.2.0",
   "description": "React Admin backend with Express and Sequelize. 1 line per resource!",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -60,7 +60,7 @@
     "husky": "^3.1.0",
     "jest": "^24.9.0",
     "node-fetch": "^2.6.0",
-    "ra-data-simple-rest": "^3.0.0",
+    "ra-data-simple-rest": "2.9.8",
     "react": "^16.12.0",
     "rimraf": "^3.0.0",
     "sequelize": "^5.21.2",
