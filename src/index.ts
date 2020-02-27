@@ -11,7 +11,7 @@ export enum Action {
 }
 
 interface GetListHooks {
-  after: (data: any[]) => Promise<any[]> | any[]
+  after: (data: any[], filter?: any) => Promise<any[]> | any[]
 }
 
 interface GetOneHooks {
@@ -107,18 +107,20 @@ const getList = <M extends Model>(
 
     const [from, to] = range ? JSON.parse(range) : [0, 100]
 
+    const parsedFilter = filter ? parseFilter(filter) : {}
+
     const { count, rows } = await model.findAndCountAll({
       offset: from,
       limit: to - from + 1,
       order: [sort ? JSON.parse(sort) : ['id', 'ASC']],
-      where: filter ? parseFilter(filter) : {},
+      where: parsedFilter,
       raw: true,
     })
 
     res.set('Content-Range', `${from}-${from + rows.length}/${count}`)
     res.set('X-Total-Count', `${count}`)
 
-    res.json(hooks ? await hooks.after(rows) : rows)
+    res.json(hooks ? await hooks.after(rows, parsedFilter) : rows)
   } catch (error) {
     next(error)
   }

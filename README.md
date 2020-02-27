@@ -53,7 +53,7 @@ app.use(
   crud('/admin/users', User, {
     hooks: {
       [Action.GET_LIST]: {
-        after: async records => doSomething(records),
+        after: async (records, filters) => doSomething(records, filters),
       },
       [Action.GET_ONE]: {
         after: async record => doSomething(record),
