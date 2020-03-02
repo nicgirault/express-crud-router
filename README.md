@@ -73,7 +73,27 @@ app.use(
 
 ### Search
 
-We support React Admin searches that _contains_ a string. For instance you can search users with emails that end with _lalilo.com_ by prepending a `%` character: `%lalilo.com`.
+#### Autocomplete
+
+When using react-admin autocomplete reference field, the searched columns must be specified:
+
+```ts
+crud('/admin/users', User, {
+  searchableFields: ['email', 'name'],
+})
+```
+
+When searching `some stuff`, the following records will be returned in this order:
+
+1. records with a searchable field that contains `some stuff`
+2. records that have searchable fields that contain both `some` and `stuff`
+3. records that have searchable fields that contain one of `some` or `stuff`
+
+The search is case insensitive.
+
+#### Filters
+
+express-sequelize-crud support React Admin searches that _contains_ a string. For instance to search users with emails that end with _@example.com_ one can filter: `%@lalilo.com`.
 
 ## contribute
 

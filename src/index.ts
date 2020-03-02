@@ -1,6 +1,7 @@
 import { Router, RequestHandler } from 'express'
+import uniqBy from 'lodash/uniqBy'
 import * as bodyParser from 'body-parser'
-import { Model, Op } from 'sequelize'
+import { Model, Op, WhereAttributeHash } from 'sequelize'
 
 export enum Action {
   GET_LIST = 'GET_LIST',
@@ -28,6 +29,8 @@ interface UpdateHooks {
   after?: (data: any) => Promise<any> | any
 }
 
+type SearchableFields = string[]
+
 interface Options {
   actions: Action[]
   disabledActions: Action[]
@@ -37,6 +40,7 @@ interface Options {
     [Action.UPDATE]: UpdateHooks
     [Action.CREATE]: CreateHooks
   }>
+  searchableFields: SearchableFields
 }
 
 export const crud = <M extends Model>(
@@ -57,7 +61,8 @@ export const crud = <M extends Model>(
           path,
           getList(
             model,
-            options && options.hooks && options.hooks[Action.GET_LIST]
+            options && options.hooks && options.hooks[Action.GET_LIST],
+            options && options.searchableFields
           )
         )
         break
@@ -100,7 +105,8 @@ export const crud = <M extends Model>(
 
 const getList = <M extends Model>(
   model: { new (): M } & typeof Model,
-  hooks?: GetListHooks
+  hooks: GetListHooks | undefined,
+  searchableFields: SearchableFields | undefined
 ): RequestHandler => async (req, res, next) => {
   try {
     const { range, sort, filter } = req.query
@@ -109,14 +115,9 @@ const getList = <M extends Model>(
 
     const parsedFilter = filter ? parseFilter(filter) : {}
 
-    const { count, rows } = await model.findAndCountAll({
-      offset: from,
-      limit: to - from + 1,
-      order: [sort ? JSON.parse(sort) : ['id', 'ASC']],
-      where: parsedFilter,
-      raw: true,
-    })
-
+    const { rows, count } = parsedFilter['q']
+      ? await search(parsedFilter['q'], to - from + 1, model, searchableFields)
+      : await findAndCountAll(model, from, to, sort, parsedFilter)
     res.set('Content-Range', `${from}-${from + rows.length}/${count}`)
     res.set('X-Total-Count', `${count}`)
 
@@ -254,4 +255,87 @@ export const parseFilter = (filter: string) => {
       }),
       {}
     )
+}
+
+const search = async <M extends Model>(
+  queryString: string,
+  limit: number,
+  model: { new (): M } & typeof Model,
+  searchableFields: SearchableFields | undefined
+) => {
+  const resultChunks = await Promise.all(
+    prepareQueries(queryString, searchableFields).map(filters =>
+      model.findAll({
+        limit,
+        order: [['id', 'ASC']],
+        where: filters,
+        raw: true,
+      })
+    )
+  )
+
+  const rows = uniqBy(resultChunks.flat().slice(0, limit), 'id')
+
+  return { rows, count: rows.length }
+}
+
+const findAndCountAll = <M extends Model>(
+  model: { new (): M } & typeof Model,
+  from: number,
+  to: number,
+  sort: string,
+  parsedFilter: WhereAttributeHash
+) =>
+  model.findAndCountAll({
+    offset: from,
+    limit: to - from + 1,
+    order: [sort ? JSON.parse(sort) : ['id', 'ASC']],
+    where: parsedFilter,
+    raw: true,
+  })
+
+export const prepareQueries = (
+  q: string,
+  searchableFields: SearchableFields | undefined
+) => {
+  if (!searchableFields) {
+    // TODO: we could propose a default behavior based on model rawAttributes
+    // or (maybe better) based on existing indexes. This can be complexe
+    // because we have to deal with column types
+    throw new Error(
+      'You must provide searchableFields option to use the "q" filter in express-sequelize-crud'
+    )
+  }
+  const splittedQuery = q.split(' ')
+
+  return [
+    // priority to unsplit match
+    {
+      [Op.or]: searchableFields.map(field => ({
+        [field]: {
+          [Op.iLike]: `%${q}%`,
+        },
+      })),
+    },
+    // then search records with all tokens
+    {
+      [Op.and]: splittedQuery.map(token => ({
+        [Op.or]: searchableFields.map(field => ({
+          [field]: {
+            [Op.iLike]: `%${token}%`,
+          },
+        })),
+      })),
+    },
+    // // then search records with at least one token
+    {
+      [Op.or]: splittedQuery.map(token => ({
+        [Op.or]: searchableFields.map(field => ({
+          [field]: {
+            [Op.iLike]: `%${token}%`,
+          },
+        })),
+      })),
+    },
+  ]
 }

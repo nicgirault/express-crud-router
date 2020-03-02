@@ -1,6 +1,6 @@
 import { Op } from 'sequelize'
 
-import { crud, Action, parseFilter } from '../src'
+import { crud, Action, parseFilter, prepareQueries } from '../src'
 import { User } from './User'
 import { setupApp } from './app'
 
@@ -357,4 +357,51 @@ describe('parseFilter', () => {
       expect(parsedFilter).toEqual(expectedParsedFilter)
     }
   )
+
+  it('handle autocomplete query', () => {
+    expect(prepareQueries('some mustach', ['field1', 'field2'])).toEqual([
+      {
+        [Op.or]: [
+          {
+            field1: { [Op.iLike]: '%some mustach%' },
+          },
+          {
+            field2: { [Op.iLike]: '%some mustach%' },
+          },
+        ],
+      },
+      {
+        [Op.and]: [
+          {
+            [Op.or]: [
+              { field1: { [Op.iLike]: '%some%' } },
+              { field2: { [Op.iLike]: '%some%' } },
+            ],
+          },
+          {
+            [Op.or]: [
+              { field1: { [Op.iLike]: '%mustach%' } },
+              { field2: { [Op.iLike]: '%mustach%' } },
+            ],
+          },
+        ],
+      },
+      {
+        [Op.or]: [
+          {
+            [Op.or]: [
+              { field1: { [Op.iLike]: '%some%' } },
+              { field2: { [Op.iLike]: '%some%' } },
+            ],
+          },
+          {
+            [Op.or]: [
+              { field1: { [Op.iLike]: '%mustach%' } },
+              { field2: { [Op.iLike]: '%mustach%' } },
+            ],
+          },
+        ],
+      },
+    ])
+  })
 })
