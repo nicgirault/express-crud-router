@@ -1,6 +1,4 @@
-import { Op } from 'sequelize'
-
-import { crud, Action, parseFilter, prepareQueries } from '../src'
+import { crud, Action } from '../src'
 import { User } from './User'
 import { setupApp } from './app'
 
@@ -352,75 +350,5 @@ describe('crud', () => {
         expect(destroy).toHaveBeenCalledWith({ where: { id: '1' } })
       })
     })
-  })
-})
-
-describe('parseFilter', () => {
-  it.each([
-    ['{}', {}],
-    ['{"level": 5}', { level: 5 }],
-    ['{"name": "Steve"}', { name: 'Steve' }],
-    [
-      '{"email":"%lalilo.com"}',
-      {
-        email: {
-          [Op.like]: '%lalilo.com',
-        },
-      },
-    ],
-  ])(
-    'should return a WhereAttributeHash',
-    (filter: string, expectedParsedFilter) => {
-      const parsedFilter = parseFilter(filter)
-
-      expect(parsedFilter).toEqual(expectedParsedFilter)
-    }
-  )
-
-  it('handle autocomplete query', () => {
-    expect(prepareQueries('some mustach', ['field1', 'field2'])).toEqual([
-      {
-        [Op.or]: [
-          {
-            field1: { [Op.iLike]: '%some mustach%' },
-          },
-          {
-            field2: { [Op.iLike]: '%some mustach%' },
-          },
-        ],
-      },
-      {
-        [Op.and]: [
-          {
-            [Op.or]: [
-              { field1: { [Op.iLike]: '%some%' } },
-              { field2: { [Op.iLike]: '%some%' } },
-            ],
-          },
-          {
-            [Op.or]: [
-              { field1: { [Op.iLike]: '%mustach%' } },
-              { field2: { [Op.iLike]: '%mustach%' } },
-            ],
-          },
-        ],
-      },
-      {
-        [Op.or]: [
-          {
-            [Op.or]: [
-              { field1: { [Op.iLike]: '%some%' } },
-              { field2: { [Op.iLike]: '%some%' } },
-            ],
-          },
-          {
-            [Op.or]: [
-              { field1: { [Op.iLike]: '%mustach%' } },
-              { field2: { [Op.iLike]: '%mustach%' } },
-            ],
-          },
-        ],
-      },
-    ])
   })
 })
