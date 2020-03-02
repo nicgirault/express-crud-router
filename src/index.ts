@@ -1,5 +1,5 @@
 import { Router, RequestHandler } from 'express'
-import uniqBy from 'lodash/uniqBy'
+import { uniqBy, flatten } from 'lodash'
 import * as bodyParser from 'body-parser'
 import { Model, Op, WhereAttributeHash } from 'sequelize'
 
@@ -274,7 +274,7 @@ const search = async <M extends Model>(
     )
   )
 
-  const rows = uniqBy(resultChunks.flat().slice(0, limit), 'id')
+  const rows = uniqBy(flatten(resultChunks).slice(0, limit), 'id')
 
   return { rows, count: rows.length }
 }
