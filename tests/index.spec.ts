@@ -84,9 +84,10 @@ describe('crud', () => {
 
     describe('GET_LIST', () => {
       const findAndCountAll = jest.spyOn(User, 'findAndCountAll')
+      const findAll = jest.spyOn(User, 'findAll')
 
       beforeEach(() => {
-        findAndCountAll.mockReset()
+        jest.resetAllMocks()
       })
 
       it('should handle pagination and sort', async () => {
@@ -146,6 +147,24 @@ describe('crud', () => {
         })
 
         expect(response.data[0]).toEqual({ id: 0, email: '0@lalilo.com' })
+        server.close()
+      })
+
+      it('handles search filter', async () => {
+        const [dataProvider, server] = await setupApp(
+          crud('/users', User, {
+            searchableFields: ['email', 'id'],
+          })
+        )
+
+        findAll.mockResolvedValue([])
+
+        await dataProvider(Action.GET_LIST, 'users', {
+          pagination: { page: 0, perPage: 25 },
+          sort: { field: 'id', order: 'DESC' },
+          filter: { q: 'some search' },
+        })
+        expect(findAll).toHaveBeenCalledTimes(3)
         server.close()
       })
     })
