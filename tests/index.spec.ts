@@ -1,6 +1,6 @@
 import { Op } from 'sequelize'
 
-import { crud, Action, parseFilter } from '../src'
+import { crud, Action, parseFilter, prepareQueries } from '../src'
 import { User } from './User'
 import { setupApp } from './app'
 
@@ -84,9 +84,10 @@ describe('crud', () => {
 
     describe('GET_LIST', () => {
       const findAndCountAll = jest.spyOn(User, 'findAndCountAll')
+      const findAll = jest.spyOn(User, 'findAll')
 
       beforeEach(() => {
-        findAndCountAll.mockReset()
+        jest.resetAllMocks()
       })
 
       it('should handle pagination and sort', async () => {
@@ -146,6 +147,24 @@ describe('crud', () => {
         })
 
         expect(response.data[0]).toEqual({ id: 0, email: '0@lalilo.com' })
+        server.close()
+      })
+
+      it('handles search filter', async () => {
+        const [dataProvider, server] = await setupApp(
+          crud('/users', User, {
+            searchableFields: ['email', 'id'],
+          })
+        )
+
+        findAll.mockResolvedValue([])
+
+        await dataProvider(Action.GET_LIST, 'users', {
+          pagination: { page: 0, perPage: 25 },
+          sort: { field: 'id', order: 'DESC' },
+          filter: { q: 'some search' },
+        })
+        expect(findAll).toHaveBeenCalledTimes(3)
         server.close()
       })
     })
@@ -357,4 +376,51 @@ describe('parseFilter', () => {
       expect(parsedFilter).toEqual(expectedParsedFilter)
     }
   )
+
+  it('handle autocomplete query', () => {
+    expect(prepareQueries('some mustach', ['field1', 'field2'])).toEqual([
+      {
+        [Op.or]: [
+          {
+            field1: { [Op.iLike]: '%some mustach%' },
+          },
+          {
+            field2: { [Op.iLike]: '%some mustach%' },
+          },
+        ],
+      },
+      {
+        [Op.and]: [
+          {
+            [Op.or]: [
+              { field1: { [Op.iLike]: '%some%' } },
+              { field2: { [Op.iLike]: '%some%' } },
+            ],
+          },
+          {
+            [Op.or]: [
+              { field1: { [Op.iLike]: '%mustach%' } },
+              { field2: { [Op.iLike]: '%mustach%' } },
+            ],
+          },
+        ],
+      },
+      {
+        [Op.or]: [
+          {
+            [Op.or]: [
+              { field1: { [Op.iLike]: '%some%' } },
+              { field2: { [Op.iLike]: '%some%' } },
+            ],
+          },
+          {
+            [Op.or]: [
+              { field1: { [Op.iLike]: '%mustach%' } },
+              { field2: { [Op.iLike]: '%mustach%' } },
+            ],
+          },
+        ],
+      },
+    ])
+  })
 })
