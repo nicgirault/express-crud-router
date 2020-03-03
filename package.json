@@ -1,6 +1,6 @@
 {
   "name": "express-sequelize-crud",
-  "version": "3.4.0",
+  "version": "3.5.1",
   "description": "React Admin backend with Express and Sequelize. 1 line per resource!",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -66,6 +66,7 @@
     "typescript": "^3.7.2"
   },
   "peerDependencies": {
+    "@types/express": "^4.17.2",
     "express": "^4.0.0",
     "sequelize": "^5.0.0"
   },
