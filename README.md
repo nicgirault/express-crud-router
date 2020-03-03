@@ -95,10 +95,27 @@ The search is case insensitive.
 
 express-sequelize-crud support React Admin searches that _contains_ a string. For instance to search users with emails that end with _@example.com_ one can filter: `%@lalilo.com`.
 
-## contribute
+### Custom use case
 
-### How to publish a new version on npmjs.org
+Sometime the react-admin resource does not match a database model. You can still use some request parsing features & response preparation features of express-sequelize crud in this case:
 
-- update the version in package.json
-- tag the commit `git tag -a vx.x.x`
-- push
+```ts
+import { getListWrapper } from 'express-sequelize-crud'
+
+app.get(
+  '/very-special-resource',
+  getListWrapper(async (sequelizeFindOptions, req, res) => {
+    // sequelizeFindOptions looks like:
+    // {
+    //   offset: 300,
+    //   limit: 100,
+    //   where: {
+    //     email: 'hello@example.com'
+    //   },
+    //   order: [['id', 'ASC']]
+    // }
+    const { rows, count } = await specialFind(sequelizeFindOptions)
+    return { rows, count }
+  })
+)
+```
