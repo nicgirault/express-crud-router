@@ -101,4 +101,6 @@ const getActions = (options?: Partial<Options>) => {
   return Object.values(Action)
 }
 
+export { getListWrapper } from './getList'
+
 export default crud

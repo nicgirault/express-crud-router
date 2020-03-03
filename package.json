@@ -26,7 +26,6 @@
   "license": "MIT",
   "scripts": {
     "build": "rimraf lib && babel src -d lib --extensions '.ts' && tsc",
-    "prebuild": "yarn test",
     "prepublish": "yarn build",
     "check-types": "tsc",
     "test": "jest"
