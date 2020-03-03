@@ -3,13 +3,13 @@
     "target": "esnext",
     "moduleResolution": "node",
     "allowJs": true,
-    "noEmit": true,
+    "noEmit": false,
     "strict": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "declaration": true,
-    "downlevelIteration": true
+    "emitDeclarationOnly": true,
+    "outDir": "lib"
   },
   "include": ["src"],
-  "exclude": ["node_modules", "tests", "src/**/*.spec.ts"]
+  "exclude": ["node_modules", "tests", "src/*.spec.ts"]
 }

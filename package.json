@@ -25,11 +25,9 @@
   "homepage": "https://github.com/lalalilo/express-sequelize-crud#readme",
   "license": "MIT",
   "scripts": {
-    "build": "rimraf lib && babel src -d lib --extensions '.ts'",
-    "prebuild": "yarn check-types && yarn test",
-    "postbuild": "tsc --declaration src/index.ts --outDir lib",
+    "build": "rimraf lib && babel src -d lib --extensions '.ts' && tsc",
+    "prebuild": "yarn test",
     "prepublish": "yarn build",
-    "run-cli": "babel-node --extensions '.ts' src/cli.ts",
     "check-types": "tsc",
     "test": "jest"
   },

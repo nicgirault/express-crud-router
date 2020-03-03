@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import * as bodyParser from 'body-parser'
+import bodyParser from 'body-parser'
 import { Model } from 'sequelize'
 import { getList, GetListHooks } from './getList'
 import { GetOneHooks, getOne } from './getOne'
