@@ -38,34 +38,12 @@ jobs:
           name: Code coverage
           command: npx codecov
 
-      - persist_to_workspace:
-          root: ~/express-sequelize-crud
-          paths: .
-  deploy:
-    <<: *defaults
-    steps:
-      - attach_workspace:
-          at: ~/express-sequelize-crud
       - run:
-          name: Authenticate with registry
-          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/express-sequelize-crud/.npmrc
-      - run:
-          name: Publish package
-          command: yarn publish
+          name: Release
+          command: npx semantic-release
 
 workflows:
   version: 2
   test-deploy:
     jobs:
-      - test:
-          filters:
-            tags:
-              only: /.*/
-      - deploy:
-          requires:
-            - test
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+      - test
