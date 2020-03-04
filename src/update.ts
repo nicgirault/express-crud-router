@@ -1,28 +1,25 @@
 import { RequestHandler } from 'express'
-import { Model } from 'sequelize'
+import { UpdateOptions } from 'sequelize'
+import { GetOne } from './getOne'
 
-export interface UpdateHooks {
-  before?: (data: any, record: any) => Promise<any> | any
-  after?: (data: any) => Promise<any> | any
-}
+export type Update = (data: object, options: UpdateOptions) => Promise<any>
 
-export const update = <M extends Model>(
-  model: { new (): M } & typeof Model,
-  hooks?: UpdateHooks
+export const update = (
+  doUpdate: Update,
+  doGetOne: GetOne
 ): RequestHandler => async (req, res, next) => {
   try {
-    const record = await model.findByPk(req.params.id, { raw: true })
+    const record = await doGetOne(req.params.id, {
+      raw: true,
+    })
 
     if (!record) {
       return res.status(404).json({ error: 'Record not found' })
     }
 
-    const data =
-      hooks && hooks.before ? await hooks.before(req.body, record) : req.body
+    await doUpdate(req.body, { where: { id: req.params.id } })
 
-    await model.update(data, { where: { id: req.params.id } })
-
-    res.json(hooks && hooks.after ? await hooks.after(data) : data)
+    res.json(req.body)
   } catch (error) {
     next(error)
   }
