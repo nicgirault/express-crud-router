@@ -1,23 +1,25 @@
 import { RequestHandler } from 'express'
-import { Model } from 'sequelize'
+import { Identifier, FindOptions } from 'sequelize'
 
-export interface GetOneHooks {
-  after: (data: any) => Promise<any> | any
-}
+export type GetOne = (
+  identifier: Identifier,
+  options: Omit<FindOptions, 'where'>
+) => Promise<any>
 
-export const getOne = <M extends Model>(
-  model: { new (): M } & typeof Model,
-  hooks?: GetOneHooks
-): RequestHandler => async (req, res, next) => {
+export const getOne = (doGetOne: GetOne): RequestHandler => async (
+  req,
+  res,
+  next
+) => {
   try {
-    const record = await model.findByPk(req.params.id, {
+    const record = await doGetOne(req.params.id, {
       raw: true,
     })
 
     if (!record) {
       return res.status(404).json({ error: 'Record not found' })
     }
-    res.json(hooks ? await hooks.after(record) : record)
+    res.json(record)
   } catch (error) {
     next(error)
   }
