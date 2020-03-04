@@ -1,25 +1,21 @@
 import { RequestHandler } from 'express'
-import { Model } from 'sequelize'
+import { CreateOptions, Identifier } from 'sequelize'
 
-export interface CreateHooks {
-  before?: (data: any) => Promise<any> | any
-  after?: (data: any) => Promise<any> | any
-}
+export type Create = <R>(
+  body: R,
+  options?: CreateOptions
+) => Promise<R & { id: Identifier }>
 
-export const create = <M extends Model>(
-  model: { new (): M } & typeof Model,
-  hooks?: CreateHooks
-): RequestHandler => async (req, res, next) => {
+export const create = (doCreate: Create): RequestHandler => async (
+  req,
+  res,
+  next
+) => {
   try {
-    const record = await model.create(
-      hooks && hooks.before ? await hooks.before(req.body) : req.body,
-      {
-        raw: true,
-      }
-    )
-    res
-      .status(201)
-      .json(hooks && hooks.after ? await hooks.after(record) : record)
+    const record = await doCreate(req.body, {
+      raw: true,
+    })
+    res.status(201).json(record)
   } catch (error) {
     next(error)
   }

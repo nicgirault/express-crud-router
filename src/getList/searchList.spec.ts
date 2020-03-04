@@ -1,9 +1,9 @@
 import { Op } from 'sequelize'
-import { prepareQueries } from './search'
+import { prepareQueries } from './searchList'
 
 describe('crud', () => {
   it('handle autocomplete query', () => {
-    expect(prepareQueries('some mustach', ['field1', 'field2'])).toEqual([
+    expect(prepareQueries(['field1', 'field2'])('some mustach')).toEqual([
       {
         [Op.or]: [
           {

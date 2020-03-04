@@ -1,5 +1,13 @@
 # express-sequelize-crud
 
+React-admin deals with the front in 13 lines. express-sequelize-crud deals with the backend with 2 lines!
+
+```ts
+import crud from 'express-sequelize-crud'
+
+app.use(crud('/admin/users', User))
+```
+
 Simply expose resource CRUD (Create Read Update Delete) routes for Express & Sequelize. Compatible with [React Admin Simple Rest Data Provider](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-simple-rest)
 
 [![codecov](https://codecov.io/gh/lalalilo/express-sequelize-crud/branch/master/graph/badge.svg)](https://codecov.io/gh/lalalilo/express-sequelize-crud) [![CircleCI](https://circleci.com/gh/lalalilo/express-sequelize-crud.svg?style=svg)](https://circleci.com/gh/lalalilo/express-sequelize-crud)
@@ -27,46 +35,33 @@ app.use(crud('/admin/users', User))
 
 ```ts
 import express from "express";
-import crud, { Action } from "express-sequelize-crud";
+import crud from "express-sequelize-crud";
 import { User } from "./models";
 
 const app = new express();
 app.use(
   crud("/admin/users", User, {
-    actions: [Action.GET_LIST, Action.GET_ONE]
-
-    // or list disabled actions (this option override the action option)
-    disabledActions: [Action.DELETE]
+    delete: () => throw new Error('delete is not allowed')
   })
 );
 ```
 
-### Hooks
+### Custom behavior
 
 ```ts
 import express from 'express'
-import crud, { Action } from 'express-sequelize-crud'
+import crud, { searchFields } from 'express-sequelize-crud'
 import { User } from './models'
 
 const app = new express()
 app.use(
   crud('/admin/users', User, {
-    hooks: {
-      [Action.GET_LIST]: {
-        after: async (records, filters) => doSomething(records, filters),
-      },
-      [Action.GET_ONE]: {
-        after: async record => doSomething(record),
-      },
-      [Action.CREATE]: {
-        before: async body => doSomething(body),
-        after: async record => doSomething(record),
-      },
-      [Action.UPDATE]: {
-        before: async (body, record) => doSomething(body, record),
-        after: async record => doSomething(record),
-      },
-    },
+    getList: (filter, limit, offset, order) =>
+      User.findAllAndCount({ limit, offset, order, where: filter }),
+    getOne: id => User.findByPk(id),
+    create: body => User.create(body),
+    update: (body, id) => User.update(body, { where: { id } }),
+    delete: id => User.delete({ where: { id } }),
   })
 )
 ```
@@ -75,11 +70,34 @@ app.use(
 
 #### Autocomplete
 
-When using react-admin autocomplete reference field, the searched columns must be specified:
+When using react-admin autocomplete reference field, a request is done to the API with a `q` filter. Thus, when using the autocomplete field in react-admin, you must specify the behavior to search the records. This could looks like:
+
+```ts
+app.use(
+  crud('/admin/users', User, {
+    search: async (q, findOptions) => {
+      const { rows, count } = await User.findAndCountAll({
+        ...findOptions,
+        where: {
+          [Op.or]: [
+            { address: { [Op.ilike]: `${q}%` } },
+            { zipCode: { [Op.ilike]: `${q}%` } },
+            { city: { [Op.ilike]: `${q}%` } },
+          ],
+        },
+      })
+
+      return { rows, count }
+    },
+  })
+)
+```
+
+express-sequelize-crud, exposes a default search helper that you can use like this:
 
 ```ts
 crud('/admin/users', User, {
-  searchableFields: ['email', 'name'],
+  search: searchFields(User, ['address', 'zipCode', 'city']),
 })
 ```
 
@@ -95,29 +113,13 @@ The search is case insensitive.
 
 express-sequelize-crud support React Admin searches that _contains_ a string. For instance to search users with emails that end with _@example.com_ one can filter: `%@lalilo.com`.
 
-### Custom use case
-
-Sometime the react-admin resource does not match a database model. You can still use some request parsing features & response preparation features of express-sequelize crud in this case:
+You can override this behavior by providing your own `getList` behavior:
 
 ```ts
-import { getListWrapper } from 'express-sequelize-crud'
-
-app.get(
-  '/very-special-resource',
-  getListWrapper(async (sequelizeFindOptions, req, res) => {
-    // sequelizeFindOptions looks like:
-    // {
-    //   offset: 300,
-    //   limit: 100,
-    //   where: {
-    //     email: 'hello@example.com'
-    //   },
-    //   order: [['id', 'ASC']]
-    // }
-    const { rows, count } = await specialFind(sequelizeFindOptions)
-    return { rows, count }
-  })
-)
+crud('/admin/users', User, {
+  getList: (filter, limit, offset, order) =>
+    User.findAllAndCount({ limit, offset, order, where: filter }),
+})
 ```
 
 ## Contribute
