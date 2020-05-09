@@ -29,7 +29,7 @@ export const getList = <M extends Model>(
   })
 
 export const _parseFilter = (filter: string) =>
-  mapValues(JSON.parse(filter), value => {
+  mapValues(JSON.parse(filter || '{}'), value => {
     if (typeof value === 'string' && value.indexOf('%') !== -1) {
       return { [Op.like]: value }
     }
