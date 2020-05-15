@@ -10,7 +10,7 @@ describe('defaultParseFilter', () => {
       { email: '%lalilo.com' },
       {
         email: {
-          [Op.like]: '%lalilo.com',
+          [Op.iLike]: '%lalilo.com',
         },
       },
     ],
