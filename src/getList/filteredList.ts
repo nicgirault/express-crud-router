@@ -7,7 +7,7 @@ export type ParseFilter = (filter: Record<string, any>) => WhereAttributeHash
 export const defaultParseFilter: ParseFilter = filter =>
   mapValues(filter, value => {
     if (typeof value === 'string' && value.indexOf('%') !== -1) {
-      return { [Op.like]: value }
+      return { [Op.iLike]: value }
     }
     return value
   })
