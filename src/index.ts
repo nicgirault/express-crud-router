@@ -40,19 +40,22 @@ export const crud = <M extends any>(
   )
   router.get(
     `${path}/:id`,
-    getOne((options && options.getOne) || model.findByPk)
+    getOne((options && options.getOne) || (model.findByPk.bind(model) as any))
   )
-  router.post(path, create((options && options.create) || model.create))
+  router.post(
+    path,
+    create((options && options.create) || (model.create.bind(model) as any))
+  )
   router.put(
     `${path}/:id`,
     update(
-      (options && options.update) || model.update,
-      (options && options.getOne) || model.findByPk
+      (options && options.update) || (model.update.bind(model) as any),
+      (options && options.getOne) || (model.findByPk.bind(model) as any)
     )
   )
   router.delete(
     `${path}/:id`,
-    destroy((options && options.create) || model.destroy)
+    destroy((options && options.create) || (model.destroy.bind(model) as any))
   )
 
   return router
