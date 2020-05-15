@@ -5,12 +5,12 @@ describe('defaultParseFilter', () => {
   it.each<[object, object]>([
     [{}, {}],
     [{ level: 5 }, { level: 5 }],
-    [{ name: 'Steve' }, { name: 'Steve' }],
+    [{ email: '@doe.com' }, { email: '@doe.com' }],
     [
-      { email: '%lalilo.com' },
+      { email: '@doe.com', __options: { email: 'ENDS_WITH' } },
       {
         email: {
-          [Op.iLike]: '%lalilo.com',
+          [Op.like]: '%@doe.com',
         },
       },
     ],

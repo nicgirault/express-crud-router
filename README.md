@@ -111,7 +111,16 @@ The search is case insensitive.
 
 #### Filters
 
-express-sequelize-crud support React Admin searches that _contains_ a string. For instance to search users with emails that end with _@example.com_ one can filter: `%@lalilo.com`.
+express-sequelize-crud default filter behavior allow to specify search options.
+
+In React Admin, if you use a <List> component, you can add options to alter the exact match filter behavior:
+
+```jsx
+<List filter={{__options: {email: 'STARTS_WITH'}}}>
+```
+
+This will result in a sequelize where: `{ email: { [Op.like]: 'search string%' } }`.
+The supported option values are: `STARTS_WITH`, `I_START_WITH`, `ENDS_WITH`, `I_END_WITH`, `CONTAINS`, `I_CONTAINS` (`I_` means the search will be case insensitive)
 
 You can override this behavior by providing your own `getList` behavior:
 
