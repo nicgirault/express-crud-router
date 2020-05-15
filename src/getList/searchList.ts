@@ -1,19 +1,19 @@
 import { uniqBy, flatten } from 'lodash'
-import { Model, Op } from 'sequelize'
+import { Op, FindOptions } from 'sequelize'
 
-export type SearchableFields = string[]
+export type GetSearchList = (
+  q: string,
+  limit: number
+) => Promise<{ rows: any[]; count: number }>
 
-export const search = async <M extends Model>(
-  queryString: string,
-  limit: number | undefined,
-  model: { new (): M } & typeof Model,
-  searchableFields: SearchableFields | undefined
-) => {
+export const searchFields = (
+  model: { findAll: (findOptions: FindOptions) => Promise<any> },
+  searchableFields: string[]
+) => async (q: string, limit: number) => {
   const resultChunks = await Promise.all(
-    prepareQueries(queryString, searchableFields).map(filters =>
+    prepareQueries(searchableFields)(q).map(filters =>
       model.findAll({
         limit,
-        order: [['id', 'ASC']],
         where: filters,
         raw: true,
       })
@@ -25,10 +25,7 @@ export const search = async <M extends Model>(
   return { rows, count: rows.length }
 }
 
-export const prepareQueries = (
-  q: string,
-  searchableFields: SearchableFields | undefined
-) => {
+export const prepareQueries = (searchableFields: string[]) => (q: string) => {
   if (!searchableFields) {
     // TODO: we could propose a default behavior based on model rawAttributes
     // or (maybe better) based on existing indexes. This can be complexe
