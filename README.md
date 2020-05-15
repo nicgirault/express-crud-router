@@ -134,3 +134,12 @@ This lib uses [semantic-release](https://github.com/semantic-release/semantic-re
 - perf: A code change that improves performance
 - test: Adding missing or correcting existing tests
 - chore: Changes to the build process or auxiliary tools and libraries such as documentation generation
+
+To trigger a major version release write in the core of the commit message:
+
+```
+feat: my commit
+
+
+BREAKING_CHANGE: detail here
+```
