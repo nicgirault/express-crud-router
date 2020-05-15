@@ -55,7 +55,7 @@ export const crud = <M extends any>(
   )
   router.delete(
     `${path}/:id`,
-    destroy((options && options.create) || (model.destroy.bind(model) as any))
+    destroy((options && options.destroy) || (model.destroy.bind(model) as any))
   )
 
   return router
