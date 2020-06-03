@@ -80,9 +80,9 @@ app.use(
         ...findOptions,
         where: {
           [Op.or]: [
-            { address: { [Op.ilike]: `${q}%` } },
-            { zipCode: { [Op.ilike]: `${q}%` } },
-            { city: { [Op.ilike]: `${q}%` } },
+            { address: { [Op.iLike]: `${q}%` } },
+            { zipCode: { [Op.iLike]: `${q}%` } },
+            { city: { [Op.iLike]: `${q}%` } },
           ],
         },
       })
@@ -107,7 +107,17 @@ When searching `some stuff`, the following records will be returned in this orde
 2. records that have searchable fields that contain both `some` and `stuff`
 3. records that have searchable fields that contain one of `some` or `stuff`
 
-The search is case insensitive.
+The search is case insensitive by default. You can customize the search to make it case sensitive or use a scope:
+
+```ts
+import { Op } from 'sequelize'
+
+const search = searchFields(User, ['address', 'zipCode', 'city'], Op.like)
+
+crud('/admin/users', User, {
+  search: (q, limit) => search(q, limit, { ownerId: req.user.id }),
+})
+```
 
 #### Filters
 

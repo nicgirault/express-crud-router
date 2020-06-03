@@ -48,4 +48,48 @@ describe('crud', () => {
       },
     ])
   })
+
+  it('supports alternate comparators', () => {
+    expect(prepareQueries(['field1'])('some mustach', Op.like)).toEqual([
+      {
+        [Op.or]: [
+          {
+            field1: { [Op.like]: '%some mustach%' },
+          },
+        ],
+      },
+      {
+        [Op.and]: [
+          {
+            [Op.or]: [{ field1: { [Op.like]: '%some%' } }],
+          },
+          {
+            [Op.or]: [{ field1: { [Op.like]: '%mustach%' } }],
+          },
+        ],
+      },
+      {
+        [Op.or]: [
+          {
+            [Op.or]: [{ field1: { [Op.like]: '%some%' } }],
+          },
+          {
+            [Op.or]: [{ field1: { [Op.like]: '%mustach%' } }],
+          },
+        ],
+      },
+    ])
+  })
+
+  it('does only one lookup for single tokens', () => {
+    expect(prepareQueries(['field1'])('mustach')).toEqual([
+      {
+        [Op.or]: [
+          {
+            field1: { [Op.iLike]: '%mustach%' },
+          },
+        ],
+      },
+    ])
+  })
 })
