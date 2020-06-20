@@ -57,11 +57,11 @@ const app = new express()
 app.use(
   crud('/admin/users', User, {
     getList: (filter, limit, offset, order) =>
-      User.findAllAndCount({ limit, offset, order, where: filter }),
+      User.findAndCountAll({ limit, offset, order, where: filter }),
     getOne: id => User.findByPk(id),
     create: body => User.create(body),
-    update: (body, id) => User.update(body, { where: { id } }),
-    delete: id => User.delete({ where: { id } }),
+    update: (body, options) => User.update(body, options),
+    destroy: body => User.destroy(body),
   })
 )
 ```
