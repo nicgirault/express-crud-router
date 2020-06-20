@@ -8,13 +8,14 @@ export type GetSearchList = (
 
 export const searchFields = (
   model: { findAll: (findOptions: FindOptions) => Promise<any> },
-  searchableFields: string[]
-) => async (q: string, limit: number) => {
+  searchableFields: string[],
+  comparator: symbol = Op.iLike
+) => async (q: string, limit: number, scope: FindOptions = {}) => {
   const resultChunks = await Promise.all(
-    prepareQueries(searchableFields)(q).map(filters =>
+    prepareQueries(searchableFields)(q, comparator).map(query =>
       model.findAll({
         limit,
-        where: filters,
+        where: { ...query, ...scope },
         raw: true,
       })
     )
@@ -25,7 +26,10 @@ export const searchFields = (
   return { rows, count: rows.length }
 }
 
-export const prepareQueries = (searchableFields: string[]) => (q: string) => {
+export const prepareQueries = (searchableFields: string[]) => (
+  q: string,
+  comparator: symbol = Op.iLike
+) => {
   if (!searchableFields) {
     // TODO: we could propose a default behavior based on model rawAttributes
     // or (maybe better) based on existing indexes. This can be complexe
@@ -34,33 +38,40 @@ export const prepareQueries = (searchableFields: string[]) => (q: string) => {
       'You must provide searchableFields option to use the "q" filter in express-sequelize-crud'
     )
   }
-  const splittedQuery = q.split(' ')
 
+  const defaultQuery = {
+    [Op.or]: searchableFields.map(field => ({
+      [field]: {
+        [comparator]: `%${q}%`,
+      },
+    })),
+  }
+
+  const tokens = q.split(/\s+/).filter(token => token !== '')
+  if (tokens.length < 2) return [defaultQuery]
+
+  // query consists of multiple tokens => do multiple searches
   return [
     // priority to unsplit match
-    {
-      [Op.or]: searchableFields.map(field => ({
-        [field]: {
-          [Op.iLike]: `%${q}%`,
-        },
-      })),
-    },
+    defaultQuery,
+
     // then search records with all tokens
     {
-      [Op.and]: splittedQuery.map(token => ({
+      [Op.and]: tokens.map(token => ({
         [Op.or]: searchableFields.map(field => ({
           [field]: {
-            [Op.iLike]: `%${token}%`,
+            [comparator]: `%${token}%`,
           },
         })),
       })),
     },
-    // // then search records with at least one token
+
+    // then search records with at least one token
     {
-      [Op.or]: splittedQuery.map(token => ({
+      [Op.or]: tokens.map(token => ({
         [Op.or]: searchableFields.map(field => ({
           [field]: {
-            [Op.iLike]: `%${token}%`,
+            [comparator]: `%${token}%`,
           },
         })),
       })),
