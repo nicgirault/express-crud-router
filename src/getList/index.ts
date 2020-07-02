@@ -40,7 +40,7 @@ export const parseQuery = (query: any) => {
 
   const [from, to] = range ? JSON.parse(range) : [0, 100]
 
-  const { q, ...filters } = JSON.parse(filter || {})
+  const { q, ...filters } = JSON.parse(filter || '{}')
 
   return {
     offset: from,
