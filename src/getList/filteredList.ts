@@ -1,6 +1,7 @@
 import { FindOptions } from 'sequelize'
 import { mapValues } from 'lodash'
 import { Op, WhereAttributeHash } from 'sequelize'
+import {Response} from "express";
 
 export type ParseFilter = (filter: Record<string, any>) => WhereAttributeHash
 
@@ -43,7 +44,8 @@ export type GetFilteredList = (
   filter: Record<string, any>,
   limit: number,
   offset: number,
-  order: [[string, string]]
+  order: [[string, string]],
+  res?: Response
 ) => Promise<{ rows: any[]; count: number }>
 
 export const getFilteredList = (
