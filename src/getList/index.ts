@@ -16,7 +16,8 @@ export const getList = (
         filter,
         limit,
         offset,
-        order
+        order,
+        res,
       )
       setGetListHeaders(res, offset, count, rows.length)
       res.json(rows)
@@ -26,7 +27,7 @@ export const getList = (
           .status(500)
           .json({ error: 'Search must be implemented to search records' })
       }
-      const { rows, count } = await doGetSearchList(q, limit)
+      const { rows, count } = await doGetSearchList(q, limit, res)
       setGetListHeaders(res, offset, count, rows.length)
       res.json(rows)
     }
