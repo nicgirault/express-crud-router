@@ -22,6 +22,8 @@ interface Options {
   search: GetSearchList
 }
 
+export { searchFields } from './getList/searchList'
+
 export const crud = <M extends any>(
   path: string,
   model: { new (): M } & typeof Model,
