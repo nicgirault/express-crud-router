@@ -1,14 +1,14 @@
 import { RequestHandler } from 'express'
-import { DestroyOptions } from 'sequelize'
 
-export type Destroy = (options: DestroyOptions) => Promise<any>
+export type Destroy = (id: string) => Promise<any>
+
 export const destroy = (doDetroy: Destroy): RequestHandler => async (
   req,
   res,
   next
 ) => {
   try {
-    await doDetroy({ where: { id: req.params.id } })
+    await doDetroy(req.params.id)
     res.json({ id: req.params.id })
   } catch (error) {
     next(error)

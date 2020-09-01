@@ -1,20 +1,14 @@
 import { RequestHandler } from 'express'
-import { Identifier, FindOptions } from 'sequelize'
 
-export type GetOne = (
-  identifier: Identifier,
-  options: Omit<FindOptions, 'where'>
-) => Promise<any>
+export type GetOne<R> = (identifier: string) => Promise<R | null>
 
-export const getOne = (doGetOne: GetOne): RequestHandler => async (
+export const getOne = <R>(doGetOne: GetOne<R>): RequestHandler => async (
   req,
   res,
   next
 ) => {
   try {
-    const record = await doGetOne(req.params.id, {
-      raw: true,
-    })
+    const record = await doGetOne(req.params.id)
 
     if (!record) {
       return res.status(404).json({ error: 'Record not found' })
