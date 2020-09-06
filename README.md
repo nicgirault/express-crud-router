@@ -142,6 +142,5 @@ To trigger a major version release write in the core of the commit message:
 ```
 feat: my commit
 
-
 BREAKING CHANGE: detail here
 ```
