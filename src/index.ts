@@ -18,6 +18,8 @@ export interface Actions<I extends string | number, R> {
 export { sequelizeSearchFields } from './sequelize/searchList'
 export { sequelizeCrud } from './sequelize'
 
+export { GetOne, Create, Destroy, Update, GetList, Search }
+
 export const crud = <I extends string | number, R>(
   path: string,
   actions: Partial<Actions<I, R>>
