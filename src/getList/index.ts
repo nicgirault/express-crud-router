@@ -1,30 +1,40 @@
 import { RequestHandler } from 'express'
 
 import { setGetListHeaders } from './headers'
-import { GetFilteredList } from './filteredList'
-import { GetSearchList } from './searchList'
 
-export const getList = (
-  doGetFilteredList: GetFilteredList,
-  doGetSearchList: GetSearchList | undefined
+export type GetList<R> = (conf: {
+  filter: Record<string, any>
+  limit: number
+  offset: number
+  order: Array<[string, string]>
+}) => Promise<{ rows: R[]; count: number }>
+
+export type Search<R> = (
+  q: string,
+  limit: number
+) => Promise<{ rows: R[]; count: number }>
+
+export const getMany = <R>(
+  doGetFilteredList: GetList<R>,
+  doGetSearchList?: Search<R>
 ): RequestHandler => async (req, res, next) => {
   try {
     const { q, limit, offset, filter, order } = parseQuery(req.query)
 
     if (!q) {
-      const { rows, count } = await doGetFilteredList(
+      const { rows, count } = await doGetFilteredList({
         filter,
         limit,
         offset,
-        order
-      )
+        order,
+      })
       setGetListHeaders(res, offset, count, rows.length)
       res.json(rows)
     } else {
       if (!doGetSearchList) {
-        return res
-          .status(500)
-          .json({ error: 'Search must be implemented to search records' })
+        return res.status(400).json({
+          error: 'Search has not been implemented yet for this resource',
+        })
       }
       const { rows, count } = await doGetSearchList(q, limit)
       setGetListHeaders(res, offset, count, rows.length)
