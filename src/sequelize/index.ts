@@ -7,14 +7,15 @@ export const sequelizeCrud = <I extends string | number, R>(
     create: async body => model.create(body),
     update: async (id, body) => model.update(body, { where: { id } }),
     getOne: async id => model.findByPk(id),
-    getList: async ({ filter, limit, offset, order }) =>
-      model.findAndCountAll({
+    getList: async ({ filter, limit, offset, order }) => {
+      return model.findAndCountAll({
         limit,
         offset,
         order,
         where: filter,
         raw: true,
-      }),
+      })
+    },
     destroy: async id => {
       const record = await model.findByPk(id)
       await record.destroy()

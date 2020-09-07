@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import bodyParser from 'body-parser'
-import { getMany, GetList, Search } from './getList'
+import { getMany, GetList, Search, FiltersOption } from './getList'
 import { getOne, GetOne } from './getOne'
 import { create, Create } from './create'
 import { update, Update } from './update'
@@ -15,6 +15,10 @@ export interface Actions<I extends string | number, R> {
   search: Search<R> | null
 }
 
+interface CrudOptions {
+  filters: FiltersOption
+}
+
 export { sequelizeSearchFields } from './sequelize/searchList'
 export { sequelizeCrud } from './sequelize'
 
@@ -22,13 +26,21 @@ export { GetOne, Create, Destroy, Update, GetList, Search }
 
 export const crud = <I extends string | number, R>(
   path: string,
-  actions: Partial<Actions<I, R>>
+  actions: Partial<Actions<I, R>>,
+  options?: CrudOptions
 ) => {
   const router = Router()
   router.use(bodyParser.json())
 
   if (actions.getList)
-    router.get(path, getMany(actions.getList, actions.search || undefined))
+    router.get(
+      path,
+      getMany(
+        actions.getList,
+        actions.search || undefined,
+        options && options.filters
+      )
+    )
 
   if (actions.getOne) {
     router.get(`${path}/:id`, getOne(actions.getOne))

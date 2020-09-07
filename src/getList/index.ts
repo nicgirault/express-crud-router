@@ -1,4 +1,5 @@
 import { RequestHandler } from 'express'
+import mapValues from 'lodash/mapValues'
 
 import { setGetListHeaders } from './headers'
 
@@ -16,10 +17,14 @@ export type Search<R> = (
 
 export const getMany = <R>(
   doGetFilteredList: GetList<R>,
-  doGetSearchList?: Search<R>
+  doGetSearchList?: Search<R>,
+  filtersOption?: FiltersOption
 ): RequestHandler => async (req, res, next) => {
   try {
-    const { q, limit, offset, filter, order } = parseQuery(req.query)
+    const { q, limit, offset, filter, order } = parseQuery(
+      req.query,
+      filtersOption
+    )
 
     if (!q) {
       const { rows, count } = await doGetFilteredList({
@@ -45,7 +50,7 @@ export const getMany = <R>(
   }
 }
 
-export const parseQuery = (query: any) => {
+export const parseQuery = (query: any, filtersOption?: FiltersOption) => {
   const { range, sort, filter } = query
 
   const [from, to] = range ? JSON.parse(range) : [0, 100]
@@ -55,8 +60,21 @@ export const parseQuery = (query: any) => {
   return {
     offset: from,
     limit: to - from + 1,
-    filter: filters,
+    filter: getFilter(filters, filtersOption),
     order: [sort ? JSON.parse(sort) : ['id', 'ASC']] as [[string, string]],
     q,
   }
 }
+
+const getFilter = (
+  filter: Record<string, any>,
+  filtersOption?: FiltersOption
+) =>
+  mapValues(filter, (value, key) => {
+    if (filtersOption && filtersOption[key]) {
+      return filtersOption[key](value)
+    }
+    return value
+  })
+
+export type FiltersOption = Record<string, (value: any) => any>

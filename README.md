@@ -33,7 +33,7 @@ app.use(crud('/admin/users', sequelizeCrud(User)))
 
 ```ts
 import express from 'express'
-import crud from 'express-sequelize-crud'
+import crud, { sequelizeCrud } from 'express-sequelize-crud'
 import { User } from './models'
 
 const app = new express()
@@ -41,6 +41,28 @@ app.use(
   crud('/admin/users', {
     ...sequelizeCrud(User),
     destroy: null,
+  })
+)
+```
+
+### Custom filters
+
+Custom filters such as case isensitive filter can be perform like this:
+
+```ts
+import express from 'express'
+import { Op } from 'sequelize'
+import crud, { sequelizeCrud } from 'express-sequelize-crud'
+import { User } from './models'
+
+const app = new express()
+app.use(
+  crud('/admin/users', sequelizeCrud(User), {
+    filters: {
+      email: value => ({
+        [Op.iLike]: value,
+      }),
+    },
   })
 )
 ```
