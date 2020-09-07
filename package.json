@@ -3,7 +3,7 @@
   "version": "3.5.1",
   "description": "React Admin backend with Express and Sequelize. 1 line per resource!",
   "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
+  "types": "./lib/src/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lalalilo/express-sequelize-crud.git"
