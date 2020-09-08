@@ -14,9 +14,7 @@ export const update = <R>(
       return res.status(404).json({ error: 'Record not found' })
     }
 
-    await doUpdate(req.params.id, req.body)
-
-    res.json(req.body)
+    res.json(await doUpdate(req.params.id, req.body))
   } catch (error) {
     next(error)
   }
