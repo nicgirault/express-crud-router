@@ -5,7 +5,13 @@ export const sequelizeCrud = <I extends string | number, R>(
 ): Omit<Actions<I, R>, 'search'> => {
   return {
     create: async body => model.create(body),
-    update: async (id, body) => model.update(body, { where: { id } }),
+    update: async (id, body) => {
+      const record = await model.findByPk(id)
+      if (!record) {
+        throw new Error('Record not found')
+      }
+      return record.update(body)
+    },
     getOne: async id => model.findByPk(id),
     getList: async ({ filter, limit, offset, order }) => {
       return model.findAndCountAll({
@@ -18,6 +24,9 @@ export const sequelizeCrud = <I extends string | number, R>(
     },
     destroy: async id => {
       const record = await model.findByPk(id)
+      if (!record) {
+        throw new Error('Record not found')
+      }
       await record.destroy()
       return { id }
     },
