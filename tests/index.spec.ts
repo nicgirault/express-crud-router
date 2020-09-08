@@ -103,7 +103,7 @@ describe('crud', () => {
     describe('UPDATE', () => {
       it('calls update with expected params', async () => {
         const getOne = jest.fn().mockResolvedValue({ id: 1, name: 'Éloi' })
-        const update = jest.fn()
+        const update = jest.fn().mockResolvedValue({ id: 1, name: 'Éloi' })
 
         const dataProvider = await setupApp(
           crud('/users', {
@@ -120,7 +120,7 @@ describe('crud', () => {
           },
         })
 
-        expect(response.data).toEqual({ name: 'Éloi' })
+        expect(response.data).toEqual({ id: 1, name: 'Éloi' })
         expect(update).toHaveBeenCalledWith('1', { name: 'Éloi' })
       })
 

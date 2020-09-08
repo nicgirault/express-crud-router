@@ -17,6 +17,7 @@ export interface Actions<I extends string | number, R> {
 
 interface CrudOptions {
   filters: FiltersOption
+  disable: string[] | ((body: any) => boolean)
 }
 
 export { sequelizeSearchFields } from './sequelize/searchList'
