@@ -47,7 +47,7 @@ app.use(
 
 ### Custom filters
 
-Custom filters such as case isensitive filter can be perform like this:
+Custom filters such as case insensitive filter can be perform like this:
 
 ```ts
 import express from 'express'
