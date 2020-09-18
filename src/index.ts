@@ -17,7 +17,6 @@ export interface Actions<I extends string | number, R> {
 
 interface CrudOptions {
   filters: FiltersOption
-  disable: string[] | ((body: any) => boolean)
 }
 
 export { sequelizeSearchFields } from './sequelize/searchList'
@@ -28,7 +27,7 @@ export { GetOne, Create, Destroy, Update, GetList, Search }
 export const crud = <I extends string | number, R>(
   path: string,
   actions: Partial<Actions<I, R>>,
-  options?: CrudOptions
+  options?: Partial<CrudOptions>
 ) => {
   const router = Router()
   router.use(bodyParser.json())
