@@ -1,6 +1,6 @@
 import { FindOptions } from 'sequelize';
 import { WhereAttributeHash } from 'sequelize';
-import { Response } from "express";
+import { Response, Request, NextFunction } from "express";
 export declare type ParseFilter = (filter: Record<string, any>) => WhereAttributeHash;
 export declare enum FilterOptions {
     CONTAINS = "CONTAINS",
@@ -11,7 +11,7 @@ export declare enum FilterOptions {
     I_ENDS_WITH = "I_ENDS_WITH"
 }
 export declare const defaultParseFilter: ParseFilter;
-export declare type GetFilteredList = (filter: Record<string, any>, limit: number, offset: number, order: [[string, string]], res?: Response) => Promise<{
+export declare type GetFilteredList = (filter: Record<string, any>, limit: number, offset: number, order: [[string, string]], req?: Request<any>, res?: Response, next?: NextFunction) => Promise<{
     rows: any[];
     count: number;
 }>;

@@ -1,6 +1,6 @@
 import { Op, FindOptions } from 'sequelize';
-import { Response } from 'express';
-export declare type GetSearchList = (q: string, limit: number, res?: Response) => Promise<{
+import { Response, Request, NextFunction } from 'express';
+export declare type GetSearchList = (q: string, limit: number, req?: Request<any>, res?: Response, next?: NextFunction) => Promise<{
     rows: any[];
     count: number;
 }>;

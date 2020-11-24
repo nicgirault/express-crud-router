@@ -1,11 +1,13 @@
 import { uniqBy, flatten } from 'lodash'
 import { Op, FindOptions } from 'sequelize'
-import { Response } from 'express'
+import { Response, Request, NextFunction } from 'express'
 
 export type GetSearchList = (
   q: string,
   limit: number,
-  res?: Response
+  req?: Request<any>,
+  res?: Response,
+  next?: NextFunction
 ) => Promise<{ rows: any[]; count: number }>
 
 export const searchFields = (
