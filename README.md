@@ -1,14 +1,12 @@
 # express-sequelize-crud
 
-React-admin deals with the front in 13 lines. express-sequelize-crud deals with the backend with 2 lines!
-
 ```ts
-import crud from 'express-sequelize-crud'
+import crud, { sequelizeCrud } from 'express-sequelize-crud'
 
-app.use(crud('/admin/users', User))
+app.use(crud('/admin/users', sequelizeCrud(User)))
 ```
 
-Simply expose resource CRUD (Create Read Update Delete) routes for Express & Sequelize. Compatible with [React Admin Simple Rest Data Provider](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-simple-rest)
+Expose resource CRUD (Create Read Update Delete) routes for Express & Sequelize (and other ORMs in v6+). Compatible with [React Admin Simple Rest Data Provider](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-simple-rest)
 
 [![codecov](https://codecov.io/gh/lalalilo/express-sequelize-crud/branch/master/graph/badge.svg)](https://codecov.io/gh/lalalilo/express-sequelize-crud) [![CircleCI](https://circleci.com/gh/lalalilo/express-sequelize-crud.svg?style=svg)](https://circleci.com/gh/lalalilo/express-sequelize-crud)
 
@@ -24,44 +22,67 @@ yarn add express-sequelize-crud
 
 ```ts
 import express from 'express'
-import crud from 'express-sequelize-crud'
+import crud, { sequelizeCrud } from 'express-sequelize-crud'
 import { User } from './models'
 
 const app = new express()
-app.use(crud('/admin/users', User))
+app.use(crud('/admin/users', sequelizeCrud(User)))
 ```
 
 ### Limit actions
 
 ```ts
-import express from "express";
-import crud from "express-sequelize-crud";
-import { User } from "./models";
-
-const app = new express();
-app.use(
-  crud("/admin/users", User, {
-    delete: () => throw new Error('delete is not allowed')
-  })
-);
-```
-
-### Custom behavior
-
-```ts
 import express from 'express'
-import crud, { searchFields } from 'express-sequelize-crud'
+import crud, { sequelizeCrud } from 'express-sequelize-crud'
 import { User } from './models'
 
 const app = new express()
 app.use(
-  crud('/admin/users', User, {
-    getList: (filter, limit, offset, order) =>
+  crud('/admin/users', {
+    ...sequelizeCrud(User),
+    destroy: null,
+  })
+)
+```
+
+### Custom filters
+
+Custom filters such as case insensitive filter can be perform like this:
+
+```ts
+import express from 'express'
+import { Op } from 'sequelize'
+import crud, { sequelizeCrud } from 'express-sequelize-crud'
+import { User } from './models'
+
+const app = new express()
+app.use(
+  crud('/admin/users', sequelizeCrud(User), {
+    filters: {
+      email: value => ({
+        [Op.iLike]: value,
+      }),
+    },
+  })
+)
+```
+
+### Custom behavior & other ORMs
+
+```ts
+import express from 'express'
+import crud from 'express-sequelize-crud'
+import { User } from './models'
+
+const app = new express()
+app.use(
+  crud('/admin/users', {
+    getList: ({ filter, limit, offset, order }) =>
       User.findAndCountAll({ limit, offset, order, where: filter }),
     getOne: id => User.findByPk(id),
     create: body => User.create(body),
-    update: (body, options) => User.update(body, options),
-    destroy: body => User.destroy(body),
+    update: (id, body) => User.update(body, { where: { id } }),
+    destroy: id => User.destroy({ where: { id } }),
   })
 )
 ```
@@ -74,10 +95,10 @@ When using react-admin autocomplete reference field, a request is done to the AP
 
 ```ts
 app.use(
-  crud('/admin/users', User, {
-    search: async (q, findOptions) => {
+  crud('/admin/users', {
+    search: async (q, limit) => {
       const { rows, count } = await User.findAndCountAll({
-        ...findOptions,
+        limit,
         where: {
           [Op.or]: [
             { address: { [Op.iLike]: `${q}%` } },
@@ -96,8 +117,14 @@ app.use(
 express-sequelize-crud, exposes a default search helper that you can use like this:
 
 ```ts
-crud('/admin/users', User, {
-  search: searchFields(User, ['address', 'zipCode', 'city']),
+import crud, {
+  sequelizeCrud,
+  sequelizeSearchFields,
+} from 'express-sequelize-crud'
+
+crud('/admin/users', {
+  ...sequelizeCrud(User),
+  search: sequelizeSearchFields(User, ['address', 'zipCode', 'city']),
 })
 ```
 
@@ -112,33 +139,11 @@ The search is case insensitive by default. You can customize the search to make 
 ```ts
 import { Op } from 'sequelize'
 
-const search = searchFields(User, ['address', 'zipCode', 'city'], Op.like)
-
-crud('/admin/users', User, {
-  search: (q, limit) => search(q, limit, { ownerId: req.user.id }),
-})
-```
-
-#### Filters
-
-express-sequelize-crud default filter behavior allow to specify search options.
-
-In React Admin, if you use a <List> component, you can add options to alter the exact match filter behavior:
-
-```jsx
-<List filter={{__options: {email: 'STARTS_WITH'}}}>
-```
-
-This will result in a sequelize where: `{ email: { [Op.like]: 'search string%' } }`.
-The supported option values are: `STARTS_WITH`, `I_START_WITH`, `ENDS_WITH`, `I_END_WITH`, `CONTAINS`, `I_CONTAINS` (`I_` means the search will be case insensitive)
-
-You can override this behavior by providing your own `getList` behavior:
-
-```ts
-crud('/admin/users', User, {
-  getList: (filter, limit, offset, order) =>
-    User.findAllAndCount({ limit, offset, order, where: filter }),
-})
+const search = sequelizeSearchFields(
+  User,
+  ['address', 'zipCode', 'city'],
+  Op.like
+)
 ```
 
 ## Contribute
@@ -159,6 +164,5 @@ To trigger a major version release write in the core of the commit message:
 ```
 feat: my commit
 
-
-BREAKING_CHANGE: detail here
+BREAKING CHANGE: detail here
 ```

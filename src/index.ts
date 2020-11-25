@@ -1,62 +1,65 @@
 import { Router } from 'express'
 import bodyParser from 'body-parser'
-import { Model } from 'sequelize'
-import { getList } from './getList'
+import { getMany, GetList, Search, FiltersOption } from './getList'
 import { getOne, GetOne } from './getOne'
 import { create, Create } from './create'
 import { update, Update } from './update'
 import { destroy, Destroy } from './delete'
-import {
-  getFilteredList,
-  defaultParseFilter,
-  GetFilteredList,
-} from './getList/filteredList'
-import { GetSearchList } from './getList/searchList'
 
-interface Options {
-  getOne: GetOne
-  create: Create
-  destroy: Destroy
-  update: Update
-  getList: GetFilteredList
-  search: GetSearchList
+export interface Actions<I extends string | number, R> {
+  getOne: GetOne<R> | null
+  create: Create<I, R> | null
+  destroy: Destroy | null
+  update: Update<R> | null
+  getList: GetList<R> | null
+  search: Search<R> | null
 }
 
-export const crud = <M extends any>(
+interface CrudOptions {
+  filters: FiltersOption
+}
+
+export { sequelizeSearchFields } from './sequelize/searchList'
+export { sequelizeCrud } from './sequelize'
+
+export { GetOne, Create, Destroy, Update, GetList, Search }
+
+export const crud = <I extends string | number, R>(
   path: string,
-  model: { new (): M } & typeof Model,
-  options?: Partial<Options>
+  actions: Partial<Actions<I, R>>,
+  options?: Partial<CrudOptions>
 ) => {
   const router = Router()
   router.use(bodyParser.json())
 
-  router.get(
-    path,
-    getList(
-      (options && options.getList) ||
-        getFilteredList(model, defaultParseFilter),
-      options && options.search
+  if (actions.getList)
+    router.get(
+      path,
+      getMany(
+        actions.getList,
+        actions.search || undefined,
+        options && options.filters
+      )
     )
-  )
-  router.get(
-    `${path}/:id`,
-    getOne((options && options.getOne) || (model.findByPk.bind(model) as any))
-  )
-  router.post(
-    path,
-    create((options && options.create) || (model.create.bind(model) as any))
-  )
-  router.put(
-    `${path}/:id`,
-    update(
-      (options && options.update) || (model.update.bind(model) as any),
-      (options && options.getOne) || (model.findByPk.bind(model) as any)
-    )
-  )
-  router.delete(
-    `${path}/:id`,
-    destroy((options && options.destroy) || (model.destroy.bind(model) as any))
-  )
+
+  if (actions.getOne) {
+    router.get(`${path}/:id`, getOne(actions.getOne))
+  }
+
+  if (actions.create) {
+    router.post(path, create(actions.create))
+  }
+
+  if (actions.update) {
+    if (!actions.getOne) {
+      throw new Error('You cannot define update without defining getOne')
+    }
+    router.put(`${path}/:id`, update(actions.update, actions.getOne))
+  }
+
+  if (actions.destroy) {
+    router.delete(`${path}/:id`, destroy(actions.destroy))
+  }
 
   return router
 }
