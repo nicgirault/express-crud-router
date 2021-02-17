@@ -2,20 +2,21 @@ import { Model } from 'sequelize'
 import { Actions } from '..'
 
 export const sequelizeCrud = <I extends string | number, R extends Model>(
-  model: { new (): Model<R> } & typeof Model
+  model: R | { new (): R }
 ): Omit<Actions<I, R>, 'search'> => {
+  const _model: any = model // TODO: how to correctly type this???
   return {
-    create: async body => model.create(body),
+    create: async body => _model.create(body),
     update: async (id, body) => {
-      const record = await model.findByPk(id)
+      const record = await _model.findByPk(id)
       if (!record) {
         throw new Error('Record not found')
       }
       return record.update(body)
     },
-    getOne: async id => model.findByPk(id),
+    getOne: async id => _model.findByPk(id),
     getList: async ({ filter, limit, offset, order }) => {
-      return model.findAndCountAll({
+      return _model.findAndCountAll({
         limit,
         offset,
         order,
@@ -24,12 +25,12 @@ export const sequelizeCrud = <I extends string | number, R extends Model>(
       })
     },
     destroy: async id => {
-      const record = await model.findByPk(id)
+      const record = await _model.findByPk(id)
       if (!record) {
         throw new Error('Record not found')
       }
       await record.destroy()
       return { id }
     },
-  } as Omit<Actions<I, R>, 'search'>
+  }
 }
