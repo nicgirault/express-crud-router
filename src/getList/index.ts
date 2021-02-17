@@ -12,7 +12,8 @@ export type GetList<R> = (conf: {
 
 export type Search<R> = (
   q: string,
-  limit: number
+  limit: number,
+  filter: Record<string, any>
 ) => Promise<{ rows: R[]; count: number }>
 
 export const getMany = <R>(
@@ -41,7 +42,7 @@ export const getMany = <R>(
           error: 'Search has not been implemented yet for this resource',
         })
       }
-      const { rows, count } = await doGetSearchList(q, limit)
+      const { rows, count } = await doGetSearchList(q, limit, filter)
       setGetListHeaders(res, offset, count, rows.length)
       res.json(rows)
     }

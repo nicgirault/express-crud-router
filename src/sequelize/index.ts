@@ -1,20 +1,22 @@
 import { Actions } from '..'
 
 export const sequelizeCrud = <I extends string | number, R>(
-  model: any // TODO: fix any but this create sequelize dependency
+  model: R
 ): Omit<Actions<I, R>, 'search'> => {
+  // TODO: fix any but this create sequelize dependency
+  const _model: any = model
   return {
-    create: async body => model.create(body),
+    create: async body => _model.create(body),
     update: async (id, body) => {
-      const record = await model.findByPk(id)
+      const record = await _model.findByPk(id)
       if (!record) {
         throw new Error('Record not found')
       }
       return record.update(body)
     },
-    getOne: async id => model.findByPk(id),
+    getOne: async id => _model.findByPk(id),
     getList: async ({ filter, limit, offset, order }) => {
-      return model.findAndCountAll({
+      return _model.findAndCountAll({
         limit,
         offset,
         order,
@@ -23,7 +25,7 @@ export const sequelizeCrud = <I extends string | number, R>(
       })
     },
     destroy: async id => {
-      const record = await model.findByPk(id)
+      const record = await _model.findByPk(id)
       if (!record) {
         throw new Error('Record not found')
       }
