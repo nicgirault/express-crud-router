@@ -8,6 +8,12 @@ app.use(crud('/admin/users', sequelizeCrud(User)))
 
 Expose resource CRUD (Create Read Update Delete) routes for Express & Sequelize (and other ORMs in v6+). Compatible with [React Admin Simple Rest Data Provider](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-simple-rest)
 
+### Note: `Content-Range` header
+
+For `getList` methods, the response includes the total number of items in the collection in `X-Total-Count` header. You should use this response header for pagination and avoid using `Content-Range` header if your request does not include a `Range` header. Checkout [this](https://stackoverflow.com/questions/53259737/content-range-working-in-safari-but-not-in-chrome) stackoverflow thread for more info.
+
+ If you are using `ra-data-simple-rest`, please refer to the [documentation](https://github.com/Serind/ra-data-simple-rest#note-about-content-range) to use `X-Total-Count` for pagination.
+
 [![codecov](https://codecov.io/gh/lalalilo/express-sequelize-crud/branch/master/graph/badge.svg)](https://codecov.io/gh/lalalilo/express-sequelize-crud) [![CircleCI](https://circleci.com/gh/lalalilo/express-sequelize-crud.svg?style=svg)](https://circleci.com/gh/lalalilo/express-sequelize-crud)
 
 ## Install
