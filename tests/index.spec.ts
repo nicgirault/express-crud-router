@@ -1,6 +1,6 @@
 import { crud } from '../src'
-import { User } from './User'
 import { setupApp } from './app'
+import { User } from './User'
 
 describe('crud', () => {
   const ctx = {
@@ -35,7 +35,7 @@ describe('crud', () => {
           rows: rows as User[],
         })
 
-        const response = await dataProvider('GET_LIST', 'users', {
+        const response = await dataProvider.getList('users', {
           pagination: { page: 3, perPage: 5 },
           sort: { field: 'name', order: 'DESC' },
           filter: {},
@@ -70,7 +70,7 @@ describe('crud', () => {
           rows: rows as User[],
         })
 
-        const response = await dataProvider('GET_LIST', 'users', {
+        const response = await dataProvider.getList('users', {
           pagination: { page: 0, perPage: 25 },
           sort: { field: 'id', order: 'DESC' },
           filter: { q: 'some search', language: 'en' },
@@ -93,8 +93,9 @@ describe('crud', () => {
           ctx
         )
 
-        const response = await dataProvider('DELETE', 'users', {
+        const response = await dataProvider.delete('users', {
           id: 1,
+          previousData: { id: 1, email: 'test' },
         })
 
         expect(response.data).toEqual({ id: '1' })
@@ -115,15 +116,20 @@ describe('crud', () => {
           ctx
         )
 
-        const response = await dataProvider('UPDATE', 'users', {
+        const response = await dataProvider.update('users', {
           id: 1,
           data: {
+            id: 1,
             name: 'Éloi',
+          },
+          previousData: {
+            id: 1,
+            name: 'Nico',
           },
         })
 
         expect(response.data).toEqual({ id: 1, name: 'Éloi' })
-        expect(update).toHaveBeenCalledWith('1', { name: 'Éloi' })
+        expect(update).toHaveBeenCalledWith('1', { id: 1, name: 'Éloi' })
       })
 
       it('throws if getOne is not defined', async () => {
@@ -158,10 +164,15 @@ describe('crud', () => {
         )
 
         try {
-          await dataProvider('UPDATE', 'users', {
+          await dataProvider.update('users', {
             id: 1,
             data: {
+              id: 1,
               name: 'Éloi',
+            },
+            previousData: {
+              id: 1,
+              name: 'Nico',
             },
           })
         } catch (error) {
@@ -180,7 +191,7 @@ describe('crud', () => {
           ctx
         )
 
-        const response = await dataProvider('CREATE', 'users', {
+        const response = await dataProvider.create('users', {
           data: {
             name: 'Éloi',
           },
@@ -201,9 +212,7 @@ describe('crud', () => {
           ctx
         )
 
-        const response = await dataProvider('GET_ONE', 'users', {
-          id: 1,
-        })
+        const response = await dataProvider.getOne('users', { id: 1 })
 
         expect(response.data).toEqual({ id: 1, name: 'Éloi' })
         expect(getOne).toHaveBeenCalledWith('1')
@@ -221,9 +230,7 @@ describe('crud', () => {
         )
 
         try {
-          await dataProvider('GET_ONE', 'users', {
-            id: 1,
-          })
+          await dataProvider.getOne('users', { id: 1 })
         } catch (error) {
           expect(error.status).toEqual(404)
         }

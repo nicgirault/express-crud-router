@@ -1,6 +1,7 @@
 import express, { RequestHandler } from 'express'
-import simpleRestProvider from 'ra-data-simple-rest'
 import { Server } from 'http'
+import { DataProvider } from 'ra-core'
+import simpleRestProvider from 'ra-data-simple-rest'
 
 let portOffset = 0
 
@@ -29,9 +30,5 @@ export const setupApp = async (
     const _server = app.listen(port, () => resolve(_server))
   })
 
-  return simpleRestProvider(`http://localhost:${port}`) as (
-    type: any,
-    resource: any,
-    params: any
-  ) => any
+  return simpleRestProvider(`http://localhost:${port}`) as DataProvider
 }
