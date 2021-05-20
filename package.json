@@ -58,7 +58,7 @@
     "express": "^4.17.1",
     "final-form": "^4.20.2",
     "final-form-arrays": "^3.0.2",
-    "husky": "^3.1.0",
+    "husky": "^6.0.0",
     "jest": "^26.6.3",
     "jsonexport": "^3.2.0",
     "node-fetch": "^2.6.0",
