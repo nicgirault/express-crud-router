@@ -51,7 +51,7 @@
     "@types/jest": "^26.0.23",
     "@types/lodash": "^4.14.149",
     "@types/mime-types": "^2.1.0",
-    "@types/node": "^12.12.11",
+    "@types/node": "^15.9.0",
     "@types/validator": "^10.11.3",
     "codecov": "^3.6.1",
     "express": "^4.17.1",
