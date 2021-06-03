@@ -48,7 +48,7 @@
     "@babel/preset-typescript": "^7.7.2",
     "@types/bluebird": "^3.5.29",
     "@types/express": "^4.17.2",
-    "@types/jest": "^24.0.23",
+    "@types/jest": "^26.0.23",
     "@types/lodash": "^4.14.149",
     "@types/mime-types": "^2.1.0",
     "@types/node": "^12.12.11",
