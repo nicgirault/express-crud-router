@@ -1,20 +1,22 @@
-import { RequestHandler } from 'express'
+import { Request, RequestHandler, Response } from 'express'
 
-export type GetOne<R> = (identifier: string) => Promise<R | null>
+export type GetOne<R> = (
+  identifier: string,
+  req: Request,
+  res: Response
+) => Promise<R | null>
 
-export const getOne = <R>(doGetOne: GetOne<R>): RequestHandler => async (
-  req,
-  res,
-  next
-) => {
-  try {
-    const record = await doGetOne(req.params.id)
+export const getOne =
+  <R>(doGetOne: GetOne<R>): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      const record = await doGetOne(req.params.id, req, res)
 
-    if (!record) {
-      return res.status(404).json({ error: 'Record not found' })
+      if (!record) {
+        return res.status(404).json({ error: 'Record not found' })
+      }
+      res.json(record)
+    } catch (error) {
+      next(error)
     }
-    res.json(record)
-  } catch (error) {
-    next(error)
   }
-}
