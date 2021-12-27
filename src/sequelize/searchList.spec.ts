@@ -1,9 +1,42 @@
-import { Op } from 'sequelize'
+import {DataTypes, Op, Sequelize} from 'sequelize'
 import { prepareQueries } from './searchList'
 
 describe('crud', () => {
+  const sequelize = new Sequelize('sqlite::memory:');
+
+  const IdModel = sequelize.define('IdModel', {
+    // Model attributes are defined here
+    id: {
+      type: DataTypes.NUMBER,
+      allowNull: false,
+      primaryKey: true
+    },
+    field1: {
+      type: DataTypes.STRING
+    },
+    field2: {
+      type: DataTypes.STRING
+    }
+  }, {
+    modelName: "IdModel"
+  });
+
+  const UuidModel = sequelize.define('UuidModel', {
+    // Model attributes are defined here
+    id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      primaryKey: true
+    },
+    title: {
+      type: DataTypes.STRING
+    }
+  }, {
+    modelName: "UuidModel"
+  });
+
   it('handle autocomplete query', () => {
-    expect(prepareQueries(['field1', 'field2'])('some mustach')).toEqual([
+    expect(prepareQueries(IdModel, ['field1', 'field2'])('some mustach')).toEqual([
       {
         [Op.or]: [
           {
@@ -50,7 +83,7 @@ describe('crud', () => {
   })
 
   it('supports alternate comparators', () => {
-    expect(prepareQueries(['field1'])('some mustach', Op.like)).toEqual([
+    expect(prepareQueries(IdModel, ['field1'])('some mustach', Op.like)).toEqual([
       {
         [Op.or]: [
           {
@@ -82,11 +115,35 @@ describe('crud', () => {
   })
 
   it('does only one lookup for single tokens', () => {
-    expect(prepareQueries(['field1'])('mustach')).toEqual([
+    expect(prepareQueries(IdModel, ['field1'])('mustach')).toEqual([
       {
         [Op.or]: [
           {
             field1: { [Op.iLike]: '%mustach%' },
+          },
+        ],
+      },
+    ])
+  })
+
+  it('adopts query for uuid fields', () => {
+    expect(prepareQueries(UuidModel, ['id'])('123-123')).toEqual([
+      {
+        [Op.or]: [
+          {
+            id: { [Op.eq]: '123-123'},
+          },
+        ],
+      },
+    ])
+    expect(prepareQueries(UuidModel, ['id', 'title'])('123-123')).toEqual([
+      {
+        [Op.or]: [
+          {
+            id: { [Op.eq]: '123-123'},
+          },
+          {
+            title: { [Op.iLike]: '%123-123%'},
           },
         ],
       },
