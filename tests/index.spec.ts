@@ -71,14 +71,18 @@ describe('crud', () => {
         })
 
         const response = await dataProvider.getList('users', {
-          pagination: { page: 0, perPage: 25 },
+          pagination: { page: 1, perPage: 25 },
           sort: { field: 'id', order: 'DESC' },
           filter: { q: 'some search', language: 'en' },
         })
         expect(response.data).toEqual(rows)
         expect(response.total).toEqual(totalCount)
-        expect(search).toHaveBeenCalledWith('some search', 25, {
-          language: 'en',
+        expect(search).toHaveBeenCalledWith('some search', {
+          limit: 25,
+          filter: {
+            language: 'en',
+          },
+          offset: 0,
         })
       })
     })
