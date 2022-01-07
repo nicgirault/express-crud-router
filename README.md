@@ -120,7 +120,10 @@ app.use(
 )
 ```
 
-express-sequelize-crud, exposes a default search helper that you can use like this:
+express-sequelize-crud exposes a default search helper function `sequelizeSearchFields`. 
+Internally it uses `LIKE` syntax for all columns except uuid (`type: DataTypes.UUID`)
+
+Here is an example:
 
 ```ts
 import crud, {
