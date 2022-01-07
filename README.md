@@ -83,12 +83,12 @@ import { User } from './models'
 const app = new express()
 app.use(
   crud('/admin/users', {
-    getList: ({ filter, limit, offset, order }) =>
+    getList: ({ filter, limit, offset, order, opts: { req, res } }) =>
       User.findAndCountAll({ limit, offset, order, where: filter }),
-    getOne: id => User.findByPk(id),
-    create: body => User.create(body),
-    update: (id, body) => User.update(body, { where: { id } }),
-    destroy: id => User.destroy({ where: { id } }),
+    getOne: (id, { req, res }) => User.findByPk(id),
+    create: (body, { req, res }) => User.create(body),
+    update: (id, body, {req, res}) => User.update(body, { where: { id } }),
+    destroy: (id, { req, res }) => User.destroy({ where: { id } }),
   })
 )
 ```
