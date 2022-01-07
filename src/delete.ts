@@ -1,6 +1,6 @@
-import { RequestHandler } from 'express'
+import { RequestHandler, Request, Response } from 'express'
 
-export type Destroy = (id: string) => Promise<any>
+export type Destroy = (id: string, opts?: { req: Request, res: Response }) => Promise<any>
 
 export const destroy = (doDestroy: Destroy): RequestHandler => async (
   req,
@@ -8,7 +8,7 @@ export const destroy = (doDestroy: Destroy): RequestHandler => async (
   next
 ) => {
   try {
-    await doDestroy(req.params.id)
+    await doDestroy(req.params.id, { req, res })
     res.json({ id: req.params.id })
   } catch (error) {
     next(error)

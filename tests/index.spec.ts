@@ -15,6 +15,11 @@ describe('crud', () => {
     ctx.server.close()
   })
 
+  const expectReqRes = expect.objectContaining({
+    req: expect.any(Object),
+    res: expect.any(Object),
+  })
+
   describe('actions', () => {
     describe('GET_LIST', () => {
       it('calls getList with expected params when no "q" filter is provided', async () => {
@@ -48,7 +53,7 @@ describe('crud', () => {
           limit: 5,
           filter: {},
           order: [['name', 'DESC']],
-        })
+        }, expectReqRes)
       })
 
       it('calls search with expected params when a "q" filter is provided', async () => {
@@ -79,7 +84,7 @@ describe('crud', () => {
         expect(response.total).toEqual(totalCount)
         expect(search).toHaveBeenCalledWith('some search', 25, {
           language: 'en',
-        })
+        }, expectReqRes)
       })
     })
 
@@ -98,7 +103,7 @@ describe('crud', () => {
         })
 
         expect(response.data).toEqual({ id: '1' })
-        expect(destroy).toHaveBeenCalledWith('1')
+        expect(destroy).toHaveBeenCalledWith('1', expectReqRes)
       })
     })
 
@@ -123,7 +128,7 @@ describe('crud', () => {
         })
 
         expect(response.data).toEqual({ id: 1, name: 'Éloi' })
-        expect(update).toHaveBeenCalledWith('1', { name: 'Éloi' })
+        expect(update).toHaveBeenCalledWith('1', { name: 'Éloi' }, expectReqRes)
       })
 
       it('throws if getOne is not defined', async () => {
@@ -187,7 +192,7 @@ describe('crud', () => {
         })
 
         expect(response.data).toEqual({ id: 1, name: 'Éloi' })
-        expect(create).toHaveBeenCalledWith({ name: 'Éloi' })
+        expect(create).toHaveBeenCalledWith({ name: 'Éloi' }, expectReqRes)
       })
     })
 
@@ -206,7 +211,7 @@ describe('crud', () => {
         })
 
         expect(response.data).toEqual({ id: 1, name: 'Éloi' })
-        expect(getOne).toHaveBeenCalledWith('1')
+        expect(getOne).toHaveBeenCalledWith('1', expectReqRes)
       })
 
       it('throws a 404 when record is not found', async () => {

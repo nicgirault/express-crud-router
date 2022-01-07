@@ -1,18 +1,21 @@
 import { uniqBy, flatten } from 'lodash'
-import { Op, FindOptions, WhereOptions } from 'sequelize'
+import {Op, FindOptions, ModelAttributeColumnOptions, WhereOptions, DataTypes} from 'sequelize'
 
 export type GetSearchList = <R>(
   q: string,
   limit: number
 ) => Promise<{ rows: R[]; count: number }>
 
+type PartialModel<R> = { findAll: (findOptions: FindOptions) => Promise<R[]>, rawAttributes: Record<string, ModelAttributeColumnOptions> }
+
 export const sequelizeSearchFields = <R>(
-  model: { findAll: (findOptions: FindOptions) => Promise<R[]> },
+  model: PartialModel<R>,
   searchableFields: string[],
   comparator: symbol = Op.iLike
 ) => async (q: string, limit: number, scope: WhereOptions = {}) => {
+
   const resultChunks = await Promise.all(
-    prepareQueries(searchableFields)(q, comparator).map(query =>
+    prepareQueries<R>(model, searchableFields)(q, comparator).map(query =>
       model.findAll({
         limit,
         where: { ...query, ...scope },
@@ -26,7 +29,14 @@ export const sequelizeSearchFields = <R>(
   return { rows, count: rows.length }
 }
 
-export const prepareQueries = (searchableFields: string[]) => (
+const getSearchTerm = <R>(model: PartialModel<R>, field: string, comparator: symbol, token: string) => {
+  if (String(model.rawAttributes[field].type) === String(DataTypes.UUID)) {
+    return { [Op.eq]: token}
+  }
+  return { [comparator]: `%${token}%`}
+}
+
+export const prepareQueries = <R>(model: PartialModel<R>, searchableFields: string[]) => (
   q: string,
   comparator: symbol = Op.iLike
 ): WhereOptions[] => {
@@ -41,9 +51,7 @@ export const prepareQueries = (searchableFields: string[]) => (
 
   const defaultQuery = {
     [Op.or]: searchableFields.map(field => ({
-      [field]: {
-        [comparator]: `%${q}%`,
-      },
+      [field]: getSearchTerm(model, field, comparator, q),
     })),
   }
 
@@ -59,9 +67,7 @@ export const prepareQueries = (searchableFields: string[]) => (
     {
       [Op.and]: tokens.map(token => ({
         [Op.or]: searchableFields.map(field => ({
-          [field]: {
-            [comparator]: `%${token}%`,
-          },
+          [field]: getSearchTerm(model, field, comparator, token),
         })),
       })),
     },
@@ -70,9 +76,7 @@ export const prepareQueries = (searchableFields: string[]) => (
     {
       [Op.or]: tokens.map(token => ({
         [Op.or]: searchableFields.map(field => ({
-          [field]: {
-            [comparator]: `%${token}%`,
-          },
+          [field]: getSearchTerm(model, field, comparator, token),
         })),
       })),
     },

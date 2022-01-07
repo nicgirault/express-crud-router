@@ -1,20 +1,20 @@
-import { RequestHandler } from 'express'
+import { RequestHandler, Request, Response } from 'express'
 import { GetOne } from './getOne'
 
-export type Update<R> = (id: string, data: R) => Promise<any>
+export type Update<R> = (id: string, data: R, opts?: { req: Request,res: Response }) => Promise<any>
 
 export const update = <R>(
   doUpdate: Update<R>,
   doGetOne: GetOne<R>
 ): RequestHandler => async (req, res, next) => {
   try {
-    const record = await doGetOne(req.params.id)
+    const record = await doGetOne(req.params.id, { req, res })
 
     if (!record) {
       return res.status(404).json({ error: 'Record not found' })
     }
 
-    res.json(await doUpdate(req.params.id, req.body))
+    res.json(await doUpdate(req.params.id, req.body, { req, res }))
   } catch (error) {
     next(error)
   }
