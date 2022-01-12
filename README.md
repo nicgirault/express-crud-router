@@ -1,5 +1,9 @@
 # express-crud-router
 
+[![codecov](https://codecov.io/gh/lalalilo/express-crud-router/branch/master/graph/badge.svg)](https://codecov.io/gh/lalalilo/express-crud-router) [![CircleCI](https://circleci.com/gh/lalalilo/express-crud-router.svg?style=svg)](https://circleci.com/gh/lalalilo/express-crud-router)
+
+Expose resource CRUD (Create Read Update Delete) routes in your Express app. Compatible with [React Admin Simple Rest Data Provider](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-simple-rest). The lib is ORM agnostic. [List of existing ORM connectors](https://www.npmjs.com/search?q=keywords:express-crud-router-connector).
+
 ```ts
 import crud from 'express-crud-router'
 
@@ -15,15 +19,11 @@ app.use(
 )
 ```
 
-Expose resource CRUD (Create Read Update Delete) routes in you Express app. Compatible with [React Admin Simple Rest Data Provider](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-simple-rest). The lib is ORM agnostic. [List of existing ORM connectors](https://www.npmjs.com/search?q=keywords:express-crud-router-connector).
-
 ### Note: `Content-Range` header
 
 For `getList` methods, the response includes the total number of items in the collection in `X-Total-Count` header. You should use this response header for pagination and avoid using `Content-Range` header if your request does not include a `Range` header. Checkout [this](https://stackoverflow.com/questions/53259737/content-range-working-in-safari-but-not-in-chrome) stackoverflow thread for more info.
 
 If you are using `ra-data-simple-rest`, please refer to the [documentation](https://github.com/Serind/ra-data-simple-rest#note-about-content-range) to use `X-Total-Count` for pagination.
-
-[![codecov](https://codecov.io/gh/lalalilo/express-crud-router/branch/master/graph/badge.svg)](https://codecov.io/gh/lalalilo/express-crud-router) [![CircleCI](https://circleci.com/gh/lalalilo/express-crud-router.svg?style=svg)](https://circleci.com/gh/lalalilo/express-crud-router)
 
 ## Install
 
