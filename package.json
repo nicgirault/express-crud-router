@@ -3,7 +3,7 @@
   "version": "3.5.1",
   "description": "React Admin backend for Express. 1 line per resource! ORM agnostic.",
   "main": "./lib/index.js",
-  "types": "./lib/src/index.d.ts",
+  "types": "./lib/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lalalilo/express-crud-router.git"
