@@ -19,9 +19,6 @@ interface CrudOptions {
   filters: FiltersOption
 }
 
-export { sequelizeSearchFields } from './sequelize/searchList'
-export { sequelizeCrud } from './sequelize'
-
 export { GetOne, Create, Destroy, Update, GetList, Search }
 
 export const crud = <I extends string | number, R>(

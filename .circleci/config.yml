@@ -1,9 +1,9 @@
 version: 2
 
 defaults: &defaults
-  working_directory: ~/express-sequelize-crud
+  working_directory: ~/express-crud-router
   docker:
-    - image: circleci/node:12
+    - image: circleci/node:16
 
 jobs:
   test:

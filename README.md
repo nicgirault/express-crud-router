@@ -1,25 +1,34 @@
-# express-sequelize-crud
+# express-crud-router
 
 ```ts
-import crud, { sequelizeCrud } from 'express-sequelize-crud'
+import crud from 'express-crud-router'
 
-app.use(crud('/admin/users', sequelizeCrud(User)))
+app.use(
+  crud('/admin/users', {
+    getList: ({ filter, limit, offset, order }) =>
+      User.findAndCountAll({ limit, offset, order, where: filter }),
+    getOne: id => User.findByPk(id),
+    create: body => User.create(body),
+    update: (id, body) => User.update(body, { where: { id } }),
+    destroy: id => User.destroy({ where: { id } }),
+  })
+)
 ```
 
-Expose resource CRUD (Create Read Update Delete) routes for Express & Sequelize (and other ORMs in v6+). Compatible with [React Admin Simple Rest Data Provider](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-simple-rest)
+Expose resource CRUD (Create Read Update Delete) routes in you Express app. Compatible with [React Admin Simple Rest Data Provider](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-simple-rest). The lib is ORM agnostic. [List of existing ORM connectors](https://www.npmjs.com/search?q=keywords:express-crud-router-connector).
 
 ### Note: `Content-Range` header
 
 For `getList` methods, the response includes the total number of items in the collection in `X-Total-Count` header. You should use this response header for pagination and avoid using `Content-Range` header if your request does not include a `Range` header. Checkout [this](https://stackoverflow.com/questions/53259737/content-range-working-in-safari-but-not-in-chrome) stackoverflow thread for more info.
 
- If you are using `ra-data-simple-rest`, please refer to the [documentation](https://github.com/Serind/ra-data-simple-rest#note-about-content-range) to use `X-Total-Count` for pagination.
+If you are using `ra-data-simple-rest`, please refer to the [documentation](https://github.com/Serind/ra-data-simple-rest#note-about-content-range) to use `X-Total-Count` for pagination.
 
-[![codecov](https://codecov.io/gh/lalalilo/express-sequelize-crud/branch/master/graph/badge.svg)](https://codecov.io/gh/lalalilo/express-sequelize-crud) [![CircleCI](https://circleci.com/gh/lalalilo/express-sequelize-crud.svg?style=svg)](https://circleci.com/gh/lalalilo/express-sequelize-crud)
+[![codecov](https://codecov.io/gh/lalalilo/express-crud-router/branch/master/graph/badge.svg)](https://codecov.io/gh/lalalilo/express-crud-router) [![CircleCI](https://circleci.com/gh/lalalilo/express-crud-router.svg?style=svg)](https://circleci.com/gh/lalalilo/express-crud-router)
 
 ## Install
 
 ```
-yarn add express-sequelize-crud
+npm install express-crud-router
 ```
 
 ## Usage
@@ -28,7 +37,8 @@ yarn add express-sequelize-crud
 
 ```ts
 import express from 'express'
-import crud, { sequelizeCrud } from 'express-sequelize-crud'
+import crud from 'express-crud-router'
+import sequelizeCrud from 'express-crud-router-sequelize-v6-connector'
 import { User } from './models'
 
 const app = new express()
@@ -39,7 +49,8 @@ app.use(crud('/admin/users', sequelizeCrud(User)))
 
 ```ts
 import express from 'express'
-import crud, { sequelizeCrud } from 'express-sequelize-crud'
+import crud from 'express-crud-router'
+import sequelizeCrud from 'express-crud-router-sequelize-v6-connector'
 import { User } from './models'
 
 const app = new express()
@@ -58,7 +69,8 @@ Custom filters such as case insensitive filter can be perform like this:
 ```ts
 import express from 'express'
 import { Op } from 'sequelize'
-import crud, { sequelizeCrud } from 'express-sequelize-crud'
+import crud from 'express-crud-router'
+import sequelizeCrud from 'express-crud-router-sequelize-v6-connector'
 import { User } from './models'
 
 const app = new express()
@@ -77,7 +89,7 @@ app.use(
 
 ```ts
 import express from 'express'
-import crud from 'express-sequelize-crud'
+import crud from 'express-crud-router'
 import { User } from './models'
 
 const app = new express()
@@ -87,10 +99,27 @@ app.use(
       User.findAndCountAll({ limit, offset, order, where: filter }),
     getOne: (id, { req, res }) => User.findByPk(id),
     create: (body, { req, res }) => User.create(body),
-    update: (id, body, {req, res}) => User.update(body, { where: { id } }),
+    update: (id, body, { req, res }) => User.update(body, { where: { id } }),
     destroy: (id, { req, res }) => User.destroy({ where: { id } }),
   })
 )
+```
+
+An ORM connector is a lib exposing an object of following shape:
+
+```typescript
+interface Actions<R> {
+  getOne: (identifier: string) => Promise<R | null>
+  create: (body: R) => Promise<R & { id: number | string }>
+  destroy: (id: string) => Promise<any>
+  update: (id: string, data: R) => Promise<any>
+  getList: GetList<R> = (conf: {
+    filter: Record<string, any>
+    limit: number
+    offset: number
+    order: Array<[string, string]>
+  }) => Promise<{ rows: R[]; count: number }>
+}
 ```
 
 ### Search
@@ -120,40 +149,7 @@ app.use(
 )
 ```
 
-express-sequelize-crud exposes a default search helper function `sequelizeSearchFields`. 
-Internally it uses `LIKE` syntax for all columns except uuid (`type: DataTypes.UUID`)
-
-Here is an example:
-
-```ts
-import crud, {
-  sequelizeCrud,
-  sequelizeSearchFields,
-} from 'express-sequelize-crud'
-
-crud('/admin/users', {
-  ...sequelizeCrud(User),
-  search: sequelizeSearchFields(User, ['address', 'zipCode', 'city']),
-})
-```
-
-When searching `some stuff`, the following records will be returned in this order:
-
-1. records with a searchable field that contains `some stuff`
-2. records that have searchable fields that contain both `some` and `stuff`
-3. records that have searchable fields that contain one of `some` or `stuff`
-
-The search is case insensitive by default. You can customize the search to make it case sensitive or use a scope:
-
-```ts
-import { Op } from 'sequelize'
-
-const search = sequelizeSearchFields(
-  User,
-  ['address', 'zipCode', 'city'],
-  Op.like
-)
-```
+express-crud-router ORM connectors might expose some search behaviors.
 
 ## Contribute
 
