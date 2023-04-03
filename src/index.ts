@@ -12,7 +12,6 @@ export interface Actions<I extends string | number, R> {
   destroy: Destroy | null
   update: Update<R> | null
   getList: GetList<R> | null
-  search: Search<R> | null
 }
 
 interface CrudOptions {
@@ -34,7 +33,6 @@ export const crud = <I extends string | number, R>(
       path,
       getMany(
         actions.getList,
-        actions.search || undefined,
         options && options.filters
       )
     )

@@ -22,7 +22,7 @@ describe('crud', () => {
 
   describe('actions', () => {
     describe('GET_LIST', () => {
-      it('calls getList with expected params when no "q" filter is provided', async () => {
+      it('calls getList with expected params', async () => {
         const getList = jest.fn()
 
         const dataProvider = await setupApp(
@@ -56,13 +56,18 @@ describe('crud', () => {
         }, expectReqRes)
       })
 
-      it('calls search with expected params when a "q" filter is provided', async () => {
-        const search = jest.fn()
+      it('parses filter rules', async () => {
+        const getList = jest.fn()
 
         const dataProvider = await setupApp(
           crud('/users', {
-            getList: jest.fn(),
-            search,
+            getList,
+          }, {
+            filters: {
+              q: q => ({
+                name: { $or: q.split(' ') }
+              })
+            }
           }),
           ctx
         )
@@ -70,20 +75,24 @@ describe('crud', () => {
         const rows = new Array(5).fill(1)
         const totalCount = 300
 
-        search.mockResolvedValue({
+        getList.mockResolvedValue({
           count: totalCount,
           rows: rows as User[],
         })
 
         const response = await dataProvider.getList('users', {
-          pagination: { page: 0, perPage: 25 },
-          sort: { field: 'id', order: 'DESC' },
-          filter: { q: 'some search', language: 'en' },
+          pagination: { page: 3, perPage: 5 },
+          sort: { field: 'name', order: 'DESC' },
+          filter: { q: 'some name' },
         })
+
         expect(response.data).toEqual(rows)
         expect(response.total).toEqual(totalCount)
-        expect(search).toHaveBeenCalledWith('some search', 25, {
-          language: 'en',
+        expect(getList).toHaveBeenCalledWith({
+          offset: 10,
+          limit: 5,
+          filter: { name: { $or: ['some', 'name'] } },
+          order: [['name', 'DESC']],
         }, expectReqRes)
       })
     })

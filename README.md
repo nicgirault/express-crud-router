@@ -78,12 +78,35 @@ app.use(
   crud('/admin/users', sequelizeCrud(User), {
     filters: {
       email: value => ({
-        [Op.iLike]: value,
+        email: {
+          [Op.iLike]: value,
+        },
       }),
     },
   })
 )
 ```
+
+Custom filters can also be used to filter by an attribute of a relation (custom filters support async functions):
+
+```ts
+const app = new express()
+app.use(
+  crud('/admin/users', sequelizeCrud(User), {
+    filters: {
+      postTitle: async postTitle => {
+        const posts = await Post.find({ title: postTitle })
+
+        return {
+          id: posts.map(post => post.userId),
+        }
+      },
+    },
+  })
+)
+```
+
+Note that `postTitle` is a virtual attribute of the `users` resource. It is transformed as an `id` filter.
 
 ### Custom behavior & other ORMs
 
@@ -130,20 +153,15 @@ When using react-admin autocomplete reference field, a request is done to the AP
 
 ```ts
 app.use(
-  crud('/admin/users', {
-    search: async (q, limit) => {
-      const { rows, count } = await User.findAndCountAll({
-        limit,
-        where: {
-          [Op.or]: [
-            { address: { [Op.iLike]: `${q}%` } },
-            { zipCode: { [Op.iLike]: `${q}%` } },
-            { city: { [Op.iLike]: `${q}%` } },
-          ],
-        },
-      })
-
-      return { rows, count }
+  crud('/admin/users', sequelizeCrud(User), {
+    filters: {
+      q: q => ({
+        [Op.or]: [
+          { address: { [Op.iLike]: `${q}%` } },
+          { zipCode: { [Op.iLike]: `${q}%` } },
+          { city: { [Op.iLike]: `${q}%` } },
+        ],
+      }),
     },
   })
 )
