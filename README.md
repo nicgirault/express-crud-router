@@ -95,7 +95,7 @@ import { User } from './models'
 const app = new express()
 app.use(
   crud('/admin/users', {
-    getList: ({ filter, limit, offset, order, opts: { req, res } }) =>
+    getList: ({ filter, limit, offset, order }, { req, res }) =>
       User.findAndCountAll({ limit, offset, order, where: filter }),
     getOne: (id, { req, res }) => User.findByPk(id),
     create: (body, { req, res }) => User.create(body),
