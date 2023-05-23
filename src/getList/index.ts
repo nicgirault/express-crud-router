@@ -58,7 +58,7 @@ export const getMany = <R>(
 export const parseQuery = (query: any, filtersOption?: FiltersOption) => {
   const { range, sort, filter } = query
 
-  const [from, to] = range ? JSON.parse(range) : [0, 100]
+  const [from, to] = range ? JSON.parse(range) : [0, 10000]
 
   const { q, ...filters } = JSON.parse(filter || '{}')
 
