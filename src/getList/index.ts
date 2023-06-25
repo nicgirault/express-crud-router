@@ -26,7 +26,7 @@ export const getMany = <R>(
   filtersOption?: FiltersOption
 ): RequestHandler => async (req, res, next) => {
   try {
-    const { q, limit, offset, filter, order } = parseQuery(
+    const { q, limit, offset, filter, order } = await parseQuery(
       req.query,
       filtersOption
     )
@@ -37,7 +37,7 @@ export const getMany = <R>(
         limit,
         offset,
         order,
-      }, {req, res})
+      }, { req, res })
       setGetListHeaders(res, offset, count, rows.length)
       res.json(rows)
     } else {
@@ -46,7 +46,7 @@ export const getMany = <R>(
           error: 'Search has not been implemented yet for this resource',
         })
       }
-      const { rows, count } = await doGetSearchList(q, limit, filter, {req, res})
+      const { rows, count } = await doGetSearchList(q, limit, filter, { req, res })
       setGetListHeaders(res, offset, count, rows.length)
       res.json(rows)
     }
@@ -55,7 +55,7 @@ export const getMany = <R>(
   }
 }
 
-export const parseQuery = (query: any, filtersOption?: FiltersOption) => {
+export const parseQuery = async (query: any, filtersOption?: FiltersOption) => {
   const { range, sort, filter } = query
 
   const [from, to] = range ? JSON.parse(range) : [0, 10000]
@@ -65,21 +65,27 @@ export const parseQuery = (query: any, filtersOption?: FiltersOption) => {
   return {
     offset: from,
     limit: to - from + 1,
-    filter: getFilter(filters, filtersOption),
+    filter: await getFilter(filters, filtersOption),
     order: [sort ? JSON.parse(sort) : ['id', 'ASC']] as [[string, string]],
     q,
   }
 }
 
-const getFilter = (
+const getFilter = async (
   filter: Record<string, any>,
   filtersOption?: FiltersOption
-) =>
-  mapValues(filter, (value, key) => {
+) => {
+  const result: Record<string, any> = {}
+
+  for (const [key, value] of Object.entries(filter)) {
     if (filtersOption && filtersOption[key]) {
-      return filtersOption[key](value)
+      Object.assign(result, await filtersOption[key]!(value))
+    } else {
+      result[key] = value
     }
-    return value
-  })
+  }
+
+  return result
+}
 
 export type FiltersOption = Record<string, (value: any) => any>

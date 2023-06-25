@@ -78,12 +78,30 @@ app.use(
   crud('/admin/users', sequelizeCrud(User), {
     filters: {
       email: value => ({
-        [Op.iLike]: value,
+        email: {
+          [Op.iLike]: value,
+        },
       }),
     },
   })
 )
 ```
+
+Custom filters handlers can be asynchronous. It makes it possible to filter based on relation property:
+
+```ts
+const filters = {
+  category: async value => {
+    const posts = await Post.find({ category: value })
+
+    return {
+      id: posts.map(post => post.userId),
+    }
+  },
+}
+```
+
+The filter key (here category) will be removed and the filters will be populated with the returned value of the handler.
 
 ### Custom behavior & other ORMs
 
