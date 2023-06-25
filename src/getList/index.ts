@@ -3,7 +3,7 @@ import pLimit from 'p-limit';
 
 import { setGetListHeaders } from './headers'
 
-export type GetList<R> = (conf: {
+export type Get<R> = (conf: {
   filter: Record<string, any>
   limit: number
   offset: number
@@ -12,13 +12,6 @@ export type GetList<R> = (conf: {
   req: Request
   res: Response
 }) => Promise<{ rows: R[]; count: number }>
-
-export type Search<R> = (
-  q: string,
-  limit: number,
-  filter: Record<string, any>,
-  opts?: { req: Request, res: Response }
-) => Promise<{ rows: R[]; count: number }>
 
 export interface GetListOptions<R> {
   filters: FiltersOption
@@ -29,43 +22,28 @@ export interface GetListOptions<R> {
 type FiltersOption = Record<string, (value: any) => any>
 
 export const getMany = <R>(
-  doGetFilteredList: GetList<R>,
-  doGetSearchList?: Search<R>,
+  doGetFilteredList: Get<R>,
   options?: Partial<GetListOptions<R>>
 ): RequestHandler => async (req, res, next) => {
   try {
-    const { q, limit, offset, filter, order } = await parseQuery(
+    const { limit, offset, filter, order } = await parseQuery(
       req.query,
       options?.filters ?? {}
     )
 
-    if (!q) {
-      const { rows, count } = await doGetFilteredList({
-        filter,
-        limit,
-        offset,
-        order,
-      }, { req, res })
-      setGetListHeaders(res, offset, count, rows.length)
-      res.json(
-        options?.additionalFields
-          ? await populateAdditionalFields(options.additionalFields, options.additionalFieldsConcurrency ?? 1)(rows)
-          : rows
-      )
-    } else {
-      if (!doGetSearchList) {
-        return res.status(400).json({
-          error: 'Search has not been implemented yet for this resource',
-        })
-      }
-      const { rows, count } = await doGetSearchList(q, limit, filter, { req, res })
-      setGetListHeaders(res, offset, count, rows.length)
-      res.json(
-        options?.additionalFields
-          ? await populateAdditionalFields(options.additionalFields, options.additionalFieldsConcurrency ?? 1)(rows)
-          : rows
-      )
-    }
+    const { rows, count } = await doGetFilteredList({
+      filter,
+      limit,
+      offset,
+      order,
+    }, { req, res })
+    setGetListHeaders(res, offset, count, rows.length)
+    res.json(
+      options?.additionalFields
+        ? await populateAdditionalFields(options.additionalFields, options.additionalFieldsConcurrency ?? 1)(rows)
+        : rows
+    )
+
   } catch (error) {
     next(error)
   }

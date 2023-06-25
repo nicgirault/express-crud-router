@@ -1,19 +1,24 @@
 import { RequestHandler, Request, Response } from 'express'
+import { Get } from './getList'
 
-export type GetOne<R> = (identifier: string, opts?: { req: Request, res: Response }) => Promise<R | null>
-
-export const getOne = <R>(doGetOne: GetOne<R>): RequestHandler => async (
+export const getOne = <R>(doGetList: Get<R>): RequestHandler => async (
   req,
   res,
   next
 ) => {
   try {
-    const record = await doGetOne(req.params.id, { req, res })
-
-    if (!record) {
+    const { rows } = await doGetList({
+      filter: {
+        id: req.params.id
+      },
+      limit: 1,
+      offset: 0,
+      order: []
+    }, { req, res })
+    if (rows.length === 0) {
       return res.status(404).json({ error: 'Record not found' })
     }
-    res.json(record)
+    res.json(rows[0])
   } catch (error) {
     next(error)
   }
