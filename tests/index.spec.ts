@@ -1,9 +1,9 @@
+import { Server } from 'http'
 import { crud } from '../src'
 import { setupApp } from './app'
-import { User } from './User'
 
 describe('crud', () => {
-  const ctx = {
+  const ctx: { server: Server | null } = {
     server: null,
   }
 
@@ -12,7 +12,7 @@ describe('crud', () => {
   })
 
   afterEach(() => {
-    ctx.server.close()
+    ctx.server?.close()
   })
 
   const expectReqRes = expect.objectContaining({
@@ -37,7 +37,7 @@ describe('crud', () => {
 
         getList.mockResolvedValue({
           count: totalCount,
-          rows: rows as User[],
+          rows,
         })
 
         const response = await dataProvider.getList('users', {
@@ -72,7 +72,7 @@ describe('crud', () => {
 
         search.mockResolvedValue({
           count: totalCount,
-          rows: rows as User[],
+          rows,
         })
 
         const response = await dataProvider.getList('users', {
@@ -85,6 +85,26 @@ describe('crud', () => {
         expect(search).toHaveBeenCalledWith('some search', 25, {
           language: 'en',
         }, expectReqRes)
+      })
+
+      it('populates additional fields when provided', async () => {
+        const dataProvider = await setupApp(
+          crud<number, { id: number }>('/users', {
+            getList: jest.fn().mockResolvedValue({ rows: [{ id: 1 }], count: 1 }),
+          }, {
+            additionalFields: async (record) => {
+              return { additionalProperty: await new Promise(resolve => resolve(`value ${record.id}`)) }
+            }
+          }),
+          ctx
+        )
+
+        const response = await dataProvider.getList('users', {
+          pagination: { page: 0, perPage: 25 },
+          sort: { field: 'id', order: 'DESC' },
+          filter: {},
+        })
+        expect(response.data[0]).toEqual({ id: 1, additionalProperty: 'value 1' })
       })
     })
 

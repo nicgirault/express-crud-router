@@ -1,5 +1,5 @@
 import { RequestHandler, Request, Response } from 'express'
-import mapValues from 'lodash/mapValues'
+import pLimit from 'p-limit';
 
 import { setGetListHeaders } from './headers'
 
@@ -20,15 +20,23 @@ export type Search<R> = (
   opts?: { req: Request, res: Response }
 ) => Promise<{ rows: R[]; count: number }>
 
+export interface GetListOptions<R> {
+  filters: FiltersOption
+  additionalFields: (record: R) => object | Promise<object>
+  additionalFieldsConcurrency: number
+}
+
+type FiltersOption = Record<string, (value: any) => any>
+
 export const getMany = <R>(
   doGetFilteredList: GetList<R>,
   doGetSearchList?: Search<R>,
-  filtersOption?: FiltersOption
+  options?: Partial<GetListOptions<R>>
 ): RequestHandler => async (req, res, next) => {
   try {
     const { q, limit, offset, filter, order } = await parseQuery(
       req.query,
-      filtersOption
+      options?.filters ?? {}
     )
 
     if (!q) {
@@ -39,7 +47,11 @@ export const getMany = <R>(
         order,
       }, { req, res })
       setGetListHeaders(res, offset, count, rows.length)
-      res.json(rows)
+      res.json(
+        options?.additionalFields
+          ? await populateAdditionalFields(options.additionalFields, options.additionalFieldsConcurrency ?? 1)(rows)
+          : rows
+      )
     } else {
       if (!doGetSearchList) {
         return res.status(400).json({
@@ -48,14 +60,18 @@ export const getMany = <R>(
       }
       const { rows, count } = await doGetSearchList(q, limit, filter, { req, res })
       setGetListHeaders(res, offset, count, rows.length)
-      res.json(rows)
+      res.json(
+        options?.additionalFields
+          ? await populateAdditionalFields(options.additionalFields, options.additionalFieldsConcurrency ?? 1)(rows)
+          : rows
+      )
     }
   } catch (error) {
     next(error)
   }
 }
 
-export const parseQuery = async (query: any, filtersOption?: FiltersOption) => {
+export const parseQuery = async (query: any, filtersOption: FiltersOption) => {
   const { range, sort, filter } = query
 
   const [from, to] = range ? JSON.parse(range) : [0, 10000]
@@ -73,7 +89,7 @@ export const parseQuery = async (query: any, filtersOption?: FiltersOption) => {
 
 const getFilter = async (
   filter: Record<string, any>,
-  filtersOption?: FiltersOption
+  filtersOption: FiltersOption
 ) => {
   const result: Record<string, any> = {}
 
@@ -88,4 +104,12 @@ const getFilter = async (
   return result
 }
 
-export type FiltersOption = Record<string, (value: any) => any>
+
+const populateAdditionalFields =
+  <R>(additionalFields: GetListOptions<R>["additionalFields"], concurrency: number) => {
+    const limit = pLimit(concurrency)
+
+    return (records: R[]) => Promise.all(records.map(record =>
+      limit(async () => ({ ...record, ...await additionalFields(record) }))
+    ))
+  }
