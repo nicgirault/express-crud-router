@@ -78,11 +78,47 @@ app.use(
   crud('/admin/users', sequelizeCrud(User), {
     filters: {
       email: value => ({
-        [Op.iLike]: value,
+        email: {
+          [Op.iLike]: value,
+        },
       }),
     },
   })
 )
+```
+
+Custom filter handlers can be asynchronous. It makes it possible to filter based on properties of a related record. For example if we consider a blog database schema where posts are related to categories, one can filter posts by category name thanks to the following filter:
+
+```ts
+crud('/admin/posts', actions, {
+  filters: {
+    categoryName: async value => {
+      const category = await Category.findOne({ name: value }).orFail()
+
+      return {
+        categoryId: category.id,
+      }
+    },
+  },
+})
+```
+
+Notes:
+
+- the filter key (here categoryName) won't be passed to the underlying action handler.
+- there is no support of conflicting attributes. In the following code, one filter will override the effect of the other filter. There is no garantee on which filter will be prefered.
+
+```ts
+crud('/admin/posts', actions, {
+  filters: {
+    key1: async value => ({
+      conflictingKey: 'hello',
+    }),
+    key2: async value => ({
+      conflictingKey: 'world',
+    }),
+  },
+})
 ```
 
 ### Custom behavior & other ORMs
@@ -150,6 +186,28 @@ app.use(
 ```
 
 express-crud-router ORM connectors might expose some search behaviors.
+
+### Recipies
+
+#### Generic filter on related record attributes
+
+```ts
+crud('/admin/posts', actions, {
+  filters: {
+    category: async categoryFilters => {
+      const categories = await Category.find(categoryFilters)
+
+      return {
+        categoryId: categories.map(category => category.id),
+      }
+    },
+  },
+})
+```
+
+This code allows to perform queries such as:
+
+`/admin/posts?filter={"category": {"name": "recipies"}}`
 
 ## Contribute
 
