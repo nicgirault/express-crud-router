@@ -63,7 +63,7 @@
   },
   "dependencies": {
     "body-parser": "^1.19.0",
-    "lodash": "^4.17.15"
+    "p-limit": "3"
   },
   "release": {
     "branches": [

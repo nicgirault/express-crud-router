@@ -1,9 +1,9 @@
+import { Server } from 'http'
 import { crud } from '../src'
 import { setupApp } from './app'
-import { User } from './User'
 
 describe('crud', () => {
-  const ctx = {
+  const ctx: { server: Server | null } = {
     server: null,
   }
 
@@ -12,7 +12,7 @@ describe('crud', () => {
   })
 
   afterEach(() => {
-    ctx.server.close()
+    ctx.server?.close()
   })
 
   const expectReqRes = expect.objectContaining({
@@ -22,12 +22,12 @@ describe('crud', () => {
 
   describe('actions', () => {
     describe('GET_LIST', () => {
-      it('calls getList with expected params when no "q" filter is provided', async () => {
-        const getList = jest.fn()
+      it('calls get with expected params', async () => {
+        const get = jest.fn()
 
         const dataProvider = await setupApp(
           crud('/users', {
-            getList,
+            get,
           }),
           ctx
         )
@@ -35,9 +35,9 @@ describe('crud', () => {
         const rows = new Array(5).fill(1)
         const totalCount = 300
 
-        getList.mockResolvedValue({
+        get.mockResolvedValue({
           count: totalCount,
-          rows: rows as User[],
+          rows,
         })
 
         const response = await dataProvider.getList('users', {
@@ -48,7 +48,7 @@ describe('crud', () => {
 
         expect(response.data).toEqual(rows)
         expect(response.total).toEqual(totalCount)
-        expect(getList).toHaveBeenCalledWith({
+        expect(get).toHaveBeenCalledWith({
           offset: 10,
           limit: 5,
           filter: {},
@@ -56,35 +56,25 @@ describe('crud', () => {
         }, expectReqRes)
       })
 
-      it('calls search with expected params when a "q" filter is provided', async () => {
-        const search = jest.fn()
 
+      it('populates additional fields when provided', async () => {
         const dataProvider = await setupApp(
-          crud('/users', {
-            getList: jest.fn(),
-            search,
+          crud<number, { id: number }>('/users', {
+            get: jest.fn().mockResolvedValue({ rows: [{ id: 1 }], count: 1 }),
+          }, {
+            additionalFields: async (record) => {
+              return { additionalProperty: await new Promise(resolve => resolve(`value ${record.id}`)) }
+            }
           }),
           ctx
         )
 
-        const rows = new Array(5).fill(1)
-        const totalCount = 300
-
-        search.mockResolvedValue({
-          count: totalCount,
-          rows: rows as User[],
-        })
-
         const response = await dataProvider.getList('users', {
           pagination: { page: 0, perPage: 25 },
           sort: { field: 'id', order: 'DESC' },
-          filter: { q: 'some search', language: 'en' },
+          filter: {},
         })
-        expect(response.data).toEqual(rows)
-        expect(response.total).toEqual(totalCount)
-        expect(search).toHaveBeenCalledWith('some search', 25, {
-          language: 'en',
-        }, expectReqRes)
+        expect(response.data[0]).toEqual({ id: 1, additionalProperty: 'value 1' })
       })
     })
 
@@ -109,12 +99,12 @@ describe('crud', () => {
 
     describe('UPDATE', () => {
       it('calls update with expected params', async () => {
-        const getOne = jest.fn().mockResolvedValue({ id: 1, name: 'Éloi' })
+        const get = jest.fn().mockResolvedValue({ id: 1, name: 'Éloi' })
         const update = jest.fn().mockResolvedValue({ id: 1, name: 'Éloi' })
 
         const dataProvider = await setupApp(
           crud('/users', {
-            getOne,
+            get,
             update,
           }),
           ctx
@@ -152,11 +142,11 @@ describe('crud', () => {
         expect.assertions(1)
 
         const update = jest.fn()
-        const getOne = jest.fn().mockResolvedValue(null)
+        const get = jest.fn().mockResolvedValue(null)
 
         const dataProvider = await setupApp(
           crud('/users', {
-            getOne,
+            get,
             update,
           }),
           ctx
@@ -197,11 +187,11 @@ describe('crud', () => {
     })
 
     describe('GET_ONE', () => {
-      it('calls getOne with expected params', async () => {
-        const getOne = jest.fn().mockResolvedValue({ id: 1, name: 'Éloi' })
+      it('calls get with expected params', async () => {
+        const get = jest.fn().mockResolvedValue({ rows: [{ id: 1, name: 'Éloi' }], count: 1 })
         const dataProvider = await setupApp(
           crud('/users', {
-            getOne,
+            get,
           }),
           ctx
         )
@@ -211,16 +201,16 @@ describe('crud', () => {
         })
 
         expect(response.data).toEqual({ id: 1, name: 'Éloi' })
-        expect(getOne).toHaveBeenCalledWith('1', expectReqRes)
+        expect(get).toHaveBeenCalledWith({ filter: { id: '1' }, limit: 1, offset: 0, order: [] }, expectReqRes)
       })
 
       it('throws a 404 when record is not found', async () => {
         expect.assertions(1)
 
-        const getOne = jest.fn().mockResolvedValue(null)
+        const get = jest.fn().mockResolvedValue({ rows: [], count: 0 })
         const dataProvider = await setupApp(
           crud('/users', {
-            getOne,
+            get,
           }),
           ctx
         )
