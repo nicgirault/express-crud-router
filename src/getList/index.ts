@@ -40,7 +40,7 @@ export const getMany = <R>(
     setGetListHeaders(res, offset, count, rows.length)
     res.json(
       options?.additionalFields
-        ? await populateAdditionalFields(options.additionalFields, options.additionalFieldsConcurrency ?? 1)(rows)
+        ? await computeAdditionalFields(options.additionalFields, options.additionalFieldsConcurrency ?? 1)(rows)
         : rows
     )
 
@@ -83,7 +83,7 @@ const getFilter = async (
 }
 
 
-const populateAdditionalFields =
+const computeAdditionalFields =
   <R>(additionalFields: GetListOptions<R>["additionalFields"], concurrency: number) => {
     const limit = pLimit(concurrency)
 
