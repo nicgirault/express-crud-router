@@ -6,7 +6,7 @@
   "types": "./lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lalalilo/express-crud-router.git"
+    "url": "git+https://github.com/nicgirault/express-crud-router.git"
   },
   "author": "nicgirault <nic.girault@gmail.com>",
   "keywords": [
@@ -20,9 +20,9 @@
     "express"
   ],
   "bugs": {
-    "url": "https://github.com/lalalilo/express-crud-router/issues"
+    "url": "https://github.com/nicgirault/express-crud-router/issues"
   },
-  "homepage": "https://github.com/lalalilo/express-crud-router#readme",
+  "homepage": "https://github.com/nicgirault/express-crud-router#readme",
   "license": "MIT",
   "scripts": {
     "build": "rimraf lib && babel src -d lib --extensions '.ts' && tsc",

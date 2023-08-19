@@ -1,6 +1,6 @@
 # express-crud-router
 
-[![codecov](https://codecov.io/gh/lalalilo/express-crud-router/branch/master/graph/badge.svg)](https://codecov.io/gh/lalalilo/express-crud-router) [![CircleCI](https://circleci.com/gh/lalalilo/express-crud-router.svg?style=svg)](https://circleci.com/gh/lalalilo/express-crud-router)
+[![codecov](https://codecov.io/gh/nicgirault/express-crud-router/branch/master/graph/badge.svg)](https://codecov.io/gh/nicgirault/express-crud-router) [![CircleCI](https://circleci.com/gh/nicgirault/express-crud-router.svg?style=svg)](https://circleci.com/gh/nicgirault/express-crud-router)
 
 Expose resource CRUD (Create Read Update Delete) routes in your Express app. Compatible with [React Admin Simple Rest Data Provider](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-simple-rest). The lib is ORM agnostic. [List of existing ORM connectors](https://www.npmjs.com/search?q=keywords:express-crud-router-connector).
 
@@ -236,3 +236,7 @@ feat: my commit
 
 BREAKING CHANGE: detail here
 ```
+
+## Thanks
+
+Thank you to [Lalilo](https://www.welcometothejungle.com/fr/companies/lalilo) who made this library live.
