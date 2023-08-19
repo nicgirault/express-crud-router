@@ -9,9 +9,8 @@ import crud from 'express-crud-router'
 
 app.use(
   crud('/admin/users', {
-    getList: ({ filter, limit, offset, order }) =>
+    get: ({ filter, limit, offset, order }) =>
       User.findAndCountAll({ limit, offset, order, where: filter }),
-    getOne: id => User.findByPk(id),
     create: body => User.create(body),
     update: (id, body) => User.update(body, { where: { id } }),
     destroy: id => User.destroy({ where: { id } }),
@@ -131,9 +130,8 @@ import { User } from './models'
 const app = new express()
 app.use(
   crud('/admin/users', {
-    getList: ({ filter, limit, offset, order }, { req, res }) =>
+    get: ({ filter, limit, offset, order }, { req, res }) =>
       User.findAndCountAll({ limit, offset, order, where: filter }),
-    getOne: (id, { req, res }) => User.findByPk(id),
     create: (body, { req, res }) => User.create(body),
     update: (id, body, { req, res }) => User.update(body, { where: { id } }),
     destroy: (id, { req, res }) => User.destroy({ where: { id } }),
@@ -145,16 +143,15 @@ An ORM connector is a lib exposing an object of following shape:
 
 ```typescript
 interface Actions<R> {
-  getOne: (identifier: string) => Promise<R | null>
-  create: (body: R) => Promise<R & { id: number | string }>
-  destroy: (id: string) => Promise<any>
-  update: (id: string, data: R) => Promise<any>
-  getList: GetList<R> = (conf: {
+  get: GetList<R> = (conf: {
     filter: Record<string, any>
     limit: number
     offset: number
     order: Array<[string, string]>
   }) => Promise<{ rows: R[]; count: number }>
+  create: (body: R) => Promise<R & { id: number | string }>
+  destroy: (id: string) => Promise<any>
+  update: (id: string, data: R) => Promise<any>
 }
 ```
 
@@ -166,20 +163,15 @@ When using react-admin autocomplete reference field, a request is done to the AP
 
 ```ts
 app.use(
-  crud('/admin/users', {
-    search: async (q, limit) => {
-      const { rows, count } = await User.findAndCountAll({
-        limit,
-        where: {
+  crud('/admin/users', , sequelizeCrud(User), {
+    filters: {
+      q: q => ({
           [Op.or]: [
             { address: { [Op.iLike]: `${q}%` } },
             { zipCode: { [Op.iLike]: `${q}%` } },
             { city: { [Op.iLike]: `${q}%` } },
           ],
-        },
-      })
-
-      return { rows, count }
+        }),
     },
   })
 )

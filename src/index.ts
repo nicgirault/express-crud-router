@@ -1,46 +1,39 @@
 import { Router } from 'express'
 import bodyParser from 'body-parser'
-import { getMany, GetList, Search, FiltersOption } from './getList'
-import { getOne, GetOne } from './getOne'
+import { getMany, Get, GetListOptions } from './getList'
+import { getOne } from './getOne'
 import { create, Create } from './create'
 import { update, Update } from './update'
 import { destroy, Destroy } from './delete'
 
 export interface Actions<I extends string | number, R> {
-  getOne: GetOne<R> | null
+  get: Get<R> | null
   create: Create<I, R> | null
   destroy: Destroy | null
   update: Update<R> | null
-  getList: GetList<R> | null
-  search: Search<R> | null
 }
 
-interface CrudOptions {
-  filters: FiltersOption
-}
 
-export { GetOne, Create, Destroy, Update, GetList, Search }
+
+export { Create, Destroy, Update, Get }
 
 export const crud = <I extends string | number, R>(
   path: string,
   actions: Partial<Actions<I, R>>,
-  options?: Partial<CrudOptions>
+  options?: Partial<GetListOptions>
 ) => {
   const router = Router()
   router.use(bodyParser.json())
 
-  if (actions.getList)
+  if (actions.get) {
     router.get(
       path,
       getMany(
-        actions.getList,
-        actions.search || undefined,
-        options && options.filters
+        actions.get,
+        options
       )
     )
-
-  if (actions.getOne) {
-    router.get(`${path}/:id`, getOne(actions.getOne))
+    router.get(`${path}/:id`, getOne(actions.get))
   }
 
   if (actions.create) {
@@ -48,10 +41,10 @@ export const crud = <I extends string | number, R>(
   }
 
   if (actions.update) {
-    if (!actions.getOne) {
+    if (!actions.get) {
       throw new Error('You cannot define update without defining getOne')
     }
-    router.put(`${path}/:id`, update(actions.update, actions.getOne))
+    router.put(`${path}/:id`, update(actions.update, actions.get))
   }
 
   if (actions.destroy) {

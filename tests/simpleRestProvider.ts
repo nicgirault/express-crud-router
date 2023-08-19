@@ -21,11 +21,11 @@ export default (
     const options =
       countHeader === 'Content-Range'
         ? {
-            // Chrome doesn't return `Content-Range` header if no `Range` is provided in the request.
-            headers: new Headers({
-              Range: `${resource}=${rangeStart}-${rangeEnd}`,
-            }),
-          }
+          // Chrome doesn't return `Content-Range` header if no `Range` is provided in the request.
+          headers: new Headers({
+            Range: `${resource}=${rangeStart}-${rangeEnd}`,
+          }),
+        }
         : {}
 
     return httpClient(url, options).then(({ headers, json }) => {
