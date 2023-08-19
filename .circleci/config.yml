@@ -3,10 +3,10 @@ version: 2
 defaults: &defaults
   working_directory: ~/express-crud-router
   docker:
-    - image: circleci/node:16
+    - image: cimg/node:18.17
 
 jobs:
-  test:
+  main:
     <<: *defaults
     steps:
       - checkout
@@ -44,6 +44,6 @@ jobs:
 
 workflows:
   version: 2
-  test-deploy:
+  main:
     jobs:
-      - test
+      - main
