@@ -1,9 +1,9 @@
 import { RequestHandler, Request, Response } from 'express'
-import mapValues from 'lodash/mapValues'
+import pLimit from 'p-limit';
 
 import { setGetListHeaders } from './headers'
 
-export type GetList<R> = (conf: {
+export type Get<R> = (conf: {
   filter: Record<string, any>
   limit: number
   offset: number
@@ -13,49 +13,43 @@ export type GetList<R> = (conf: {
   res: Response
 }) => Promise<{ rows: R[]; count: number }>
 
-export type Search<R> = (
-  q: string,
-  limit: number,
-  filter: Record<string, any>,
-  opts?: { req: Request, res: Response }
-) => Promise<{ rows: R[]; count: number }>
+export interface GetListOptions<R> {
+  filters: FiltersOption
+  additionalAttributes: (record: R) => object | Promise<object>
+  additionalAttributesConcurrency: number
+}
+
+type FiltersOption = Record<string, (value: any) => any>
 
 export const getMany = <R>(
-  doGetFilteredList: GetList<R>,
-  doGetSearchList?: Search<R>,
-  filtersOption?: FiltersOption
+  doGetFilteredList: Get<R>,
+  options?: Partial<GetListOptions<R>>
 ): RequestHandler => async (req, res, next) => {
   try {
-    const { q, limit, offset, filter, order } = parseQuery(
+    const { limit, offset, filter, order } = await parseQuery(
       req.query,
-      filtersOption
+      options?.filters ?? {}
     )
 
-    if (!q) {
-      const { rows, count } = await doGetFilteredList({
-        filter,
-        limit,
-        offset,
-        order,
-      }, {req, res})
-      setGetListHeaders(res, offset, count, rows.length)
-      res.json(rows)
-    } else {
-      if (!doGetSearchList) {
-        return res.status(400).json({
-          error: 'Search has not been implemented yet for this resource',
-        })
-      }
-      const { rows, count } = await doGetSearchList(q, limit, filter, {req, res})
-      setGetListHeaders(res, offset, count, rows.length)
-      res.json(rows)
-    }
+    const { rows, count } = await doGetFilteredList({
+      filter,
+      limit,
+      offset,
+      order,
+    }, { req, res })
+    setGetListHeaders(res, offset, count, rows.length)
+    res.json(
+      options?.additionalAttributes
+        ? await computeAdditionalAttributes(options.additionalAttributes, options.additionalAttributesConcurrency ?? 1)(rows)
+        : rows
+    )
+
   } catch (error) {
     next(error)
   }
 }
 
-export const parseQuery = (query: any, filtersOption?: FiltersOption) => {
+export const parseQuery = async (query: any, filtersOption: FiltersOption) => {
   const { range, sort, filter } = query
 
   const [from, to] = range ? JSON.parse(range) : [0, 10000]
@@ -65,21 +59,35 @@ export const parseQuery = (query: any, filtersOption?: FiltersOption) => {
   return {
     offset: from,
     limit: to - from + 1,
-    filter: getFilter(filters, filtersOption),
+    filter: await getFilter(filters, filtersOption),
     order: [sort ? JSON.parse(sort) : ['id', 'ASC']] as [[string, string]],
     q,
   }
 }
 
-const getFilter = (
+const getFilter = async (
   filter: Record<string, any>,
-  filtersOption?: FiltersOption
-) =>
-  mapValues(filter, (value, key) => {
-    if (filtersOption && filtersOption[key]) {
-      return filtersOption[key](value)
-    }
-    return value
-  })
+  filtersOption: FiltersOption
+) => {
+  const result: Record<string, any> = {}
 
-export type FiltersOption = Record<string, (value: any) => any>
+  for (const [key, value] of Object.entries(filter)) {
+    if (filtersOption && filtersOption[key]) {
+      Object.assign(result, await filtersOption[key]!(value))
+    } else {
+      result[key] = value
+    }
+  }
+
+  return result
+}
+
+
+const computeAdditionalAttributes =
+  <R>(additionalAttributes: GetListOptions<R>["additionalAttributes"], concurrency: number) => {
+    const limit = pLimit(concurrency)
+
+    return (records: R[]) => Promise.all(records.map(record =>
+      limit(async () => ({ ...record, ...await additionalAttributes(record) }))
+    ))
+  }

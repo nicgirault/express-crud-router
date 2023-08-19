@@ -1,6 +1,6 @@
 # express-crud-router
 
-[![codecov](https://codecov.io/gh/lalalilo/express-crud-router/branch/master/graph/badge.svg)](https://codecov.io/gh/lalalilo/express-crud-router) [![CircleCI](https://circleci.com/gh/lalalilo/express-crud-router.svg?style=svg)](https://circleci.com/gh/lalalilo/express-crud-router)
+[![codecov](https://codecov.io/gh/nicgirault/express-crud-router/branch/master/graph/badge.svg)](https://codecov.io/gh/nicgirault/express-crud-router) [![CircleCI](https://circleci.com/gh/nicgirault/express-crud-router.svg?style=svg)](https://circleci.com/gh/nicgirault/express-crud-router)
 
 Expose resource CRUD (Create Read Update Delete) routes in your Express app. Compatible with [React Admin Simple Rest Data Provider](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-simple-rest). The lib is ORM agnostic. [List of existing ORM connectors](https://www.npmjs.com/search?q=keywords:express-crud-router-connector).
 
@@ -9,9 +9,8 @@ import crud from 'express-crud-router'
 
 app.use(
   crud('/admin/users', {
-    getList: ({ filter, limit, offset, order }) =>
+    get: ({ filter, limit, offset, order }) =>
       User.findAndCountAll({ limit, offset, order, where: filter }),
-    getOne: id => User.findByPk(id),
     create: body => User.create(body),
     update: (id, body) => User.update(body, { where: { id } }),
     destroy: id => User.destroy({ where: { id } }),
@@ -78,11 +77,62 @@ app.use(
   crud('/admin/users', sequelizeCrud(User), {
     filters: {
       email: value => ({
-        [Op.iLike]: value,
+        email: {
+          [Op.iLike]: value,
+        },
       }),
     },
   })
 )
+```
+
+Custom filter handlers can be asynchronous. It makes it possible to filter based on properties of a related record. For example if we consider a blog database schema where posts are related to categories, one can filter posts by category name thanks to the following filter:
+
+```ts
+crud('/admin/posts', actions, {
+  filters: {
+    categoryName: async value => {
+      const category = await Category.findOne({ name: value }).orFail()
+
+      return {
+        categoryId: category.id,
+      }
+    },
+  },
+})
+```
+
+Notes:
+
+- the filter key (here categoryName) won't be passed to the underlying action handler.
+- there is no support of conflicting attributes. In the following code, one filter will override the effect of the other filter. There is no garantee on which filter will be prefered.
+
+```ts
+crud('/admin/posts', actions, {
+  filters: {
+    key1: async value => ({
+      conflictingKey: 'hello',
+    }),
+    key2: async value => ({
+      conflictingKey: 'world',
+    }),
+  },
+})
+```
+
+### Additional attributes
+
+Additional attributes can be populated in the read views. For example one can add a count of related records like this:
+
+```ts
+crud('/admin/categories', actions, {
+  additionalAttributes: async category => {
+    return {
+      postsCount: await Post.count({ categoryId: category.id })
+    }
+  },
+  additionalAttributesConcurrency: 10 // 10 queries Post.count will be perform at the same time
+})
 ```
 
 ### Custom behavior & other ORMs
@@ -95,9 +145,8 @@ import { User } from './models'
 const app = new express()
 app.use(
   crud('/admin/users', {
-    getList: ({ filter, limit, offset, order }, { req, res }) =>
+    get: ({ filter, limit, offset, order }, { req, res }) =>
       User.findAndCountAll({ limit, offset, order, where: filter }),
-    getOne: (id, { req, res }) => User.findByPk(id),
     create: (body, { req, res }) => User.create(body),
     update: (id, body, { req, res }) => User.update(body, { where: { id } }),
     destroy: (id, { req, res }) => User.destroy({ where: { id } }),
@@ -109,16 +158,15 @@ An ORM connector is a lib exposing an object of following shape:
 
 ```typescript
 interface Actions<R> {
-  getOne: (identifier: string) => Promise<R | null>
-  create: (body: R) => Promise<R & { id: number | string }>
-  destroy: (id: string) => Promise<any>
-  update: (id: string, data: R) => Promise<any>
-  getList: GetList<R> = (conf: {
+  get: GetList<R> = (conf: {
     filter: Record<string, any>
     limit: number
     offset: number
     order: Array<[string, string]>
   }) => Promise<{ rows: R[]; count: number }>
+  create: (body: R) => Promise<R & { id: number | string }>
+  destroy: (id: string) => Promise<any>
+  update: (id: string, data: R) => Promise<any>
 }
 ```
 
@@ -130,26 +178,43 @@ When using react-admin autocomplete reference field, a request is done to the AP
 
 ```ts
 app.use(
-  crud('/admin/users', {
-    search: async (q, limit) => {
-      const { rows, count } = await User.findAndCountAll({
-        limit,
-        where: {
+  crud('/admin/users', , sequelizeCrud(User), {
+    filters: {
+      q: q => ({
           [Op.or]: [
             { address: { [Op.iLike]: `${q}%` } },
             { zipCode: { [Op.iLike]: `${q}%` } },
             { city: { [Op.iLike]: `${q}%` } },
           ],
-        },
-      })
-
-      return { rows, count }
+        }),
     },
   })
 )
 ```
 
 express-crud-router ORM connectors might expose some search behaviors.
+
+### Recipies
+
+#### Generic filter on related record attributes
+
+```ts
+crud('/admin/posts', actions, {
+  filters: {
+    category: async categoryFilters => {
+      const categories = await Category.find(categoryFilters)
+
+      return {
+        categoryId: categories.map(category => category.id),
+      }
+    },
+  },
+})
+```
+
+This code allows to perform queries such as:
+
+`/admin/posts?filter={"category": {"name": "recipies"}}`
 
 ## Contribute
 
@@ -171,3 +236,7 @@ feat: my commit
 
 BREAKING CHANGE: detail here
 ```
+
+## Thanks
+
+Thank you to [Lalilo](https://www.welcometothejungle.com/fr/companies/lalilo) who made this library live.
