@@ -20,7 +20,7 @@ export { Create, Destroy, Update, Get }
 export const crud = <I extends string | number, R>(
   path: string,
   actions: Partial<Actions<I, R>>,
-  options?: Partial<GetListOptions>
+  options?: Partial<GetListOptions<R>>
 ) => {
   const router = Router()
   router.use(bodyParser.json())

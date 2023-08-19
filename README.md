@@ -120,6 +120,21 @@ crud('/admin/posts', actions, {
 })
 ```
 
+### Additional attributes
+
+Additional attributes can be populated in the read views. For example one can add a count of related records like this:
+
+```ts
+crud('/admin/categories', actions, {
+  additionalAttributes: async category => {
+    return {
+      postsCount: await Post.count({ categoryId: category.id })
+    }
+  },
+  additionalAttributesConcurrency: 10 // 10 queries Post.count will be perform at the same time
+})
+```
+
 ### Custom behavior & other ORMs
 
 ```ts

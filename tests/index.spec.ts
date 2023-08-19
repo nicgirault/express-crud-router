@@ -55,6 +55,27 @@ describe('crud', () => {
           order: [['name', 'DESC']],
         }, expectReqRes)
       })
+
+
+      it('populates additional fields when provided', async () => {
+        const dataProvider = await setupApp(
+          crud<number, { id: number }>('/users', {
+            get: jest.fn().mockResolvedValue({ rows: [{ id: 1 }], count: 1 }),
+          }, {
+            additionalAttributes: async (record) => {
+              return { additionalProperty: await new Promise(resolve => resolve(`value ${record.id}`)) }
+            }
+          }),
+          ctx
+        )
+
+        const response = await dataProvider.getList('users', {
+          pagination: { page: 0, perPage: 25 },
+          sort: { field: 'id', order: 'DESC' },
+          filter: {},
+        })
+        expect(response.data[0]).toEqual({ id: 1, additionalProperty: 'value 1' })
+      })
     })
 
     describe('DELETE', () => {

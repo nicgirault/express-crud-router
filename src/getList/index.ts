@@ -1,4 +1,5 @@
 import { RequestHandler, Request, Response } from 'express'
+import pLimit from 'p-limit';
 
 import { setGetListHeaders } from './headers'
 
@@ -12,15 +13,17 @@ export type Get<R> = (conf: {
   res: Response
 }) => Promise<{ rows: R[]; count: number }>
 
-export interface GetListOptions {
+export interface GetListOptions<R> {
   filters: FiltersOption
+  additionalAttributes: (record: R) => object | Promise<object>
+  additionalAttributesConcurrency: number
 }
 
 type FiltersOption = Record<string, (value: any) => any>
 
 export const getMany = <R>(
   doGetFilteredList: Get<R>,
-  options?: Partial<GetListOptions>
+  options?: Partial<GetListOptions<R>>
 ): RequestHandler => async (req, res, next) => {
   try {
     const { limit, offset, filter, order } = await parseQuery(
@@ -35,7 +38,11 @@ export const getMany = <R>(
       order,
     }, { req, res })
     setGetListHeaders(res, offset, count, rows.length)
-    res.json(rows)
+    res.json(
+      options?.additionalAttributes
+        ? await computeAdditionalAttributes(options.additionalAttributes, options.additionalAttributesConcurrency ?? 1)(rows)
+        : rows
+    )
 
   } catch (error) {
     next(error)
@@ -74,3 +81,13 @@ const getFilter = async (
 
   return result
 }
+
+
+const computeAdditionalAttributes =
+  <R>(additionalAttributes: GetListOptions<R>["additionalAttributes"], concurrency: number) => {
+    const limit = pLimit(concurrency)
+
+    return (records: R[]) => Promise.all(records.map(record =>
+      limit(async () => ({ ...record, ...await additionalAttributes(record) }))
+    ))
+  }
