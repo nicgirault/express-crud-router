@@ -10,6 +10,7 @@ export const destroy = (doDestroy: Destroy): RequestHandler => async (
   try {
     await doDestroy(req.params.id, { req, res })
     res.json({ id: req.params.id })
+    next()
   } catch (error) {
     next(error)
   }

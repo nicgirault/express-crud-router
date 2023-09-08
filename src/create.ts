@@ -11,6 +11,7 @@ export const create = <I extends string | number, R>(
   try {
     const record = await doCreate(req.body, { req, res })
     res.status(201).json(record)
+    next()
   } catch (error) {
     next(error)
   }

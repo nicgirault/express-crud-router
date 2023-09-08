@@ -19,6 +19,7 @@ export const getOne = <R>(doGetList: Get<R>): RequestHandler => async (
       return res.status(404).json({ error: 'Record not found' })
     }
     res.json(rows[0])
+    next()
   } catch (error) {
     next(error)
   }
