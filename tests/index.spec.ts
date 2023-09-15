@@ -1,5 +1,5 @@
 import { Server } from 'http'
-import { crud } from '../src'
+import { crud, populateReferenceMany, populateReferenceManyCount } from '../src'
 import { setupApp } from './app'
 
 describe('crud', () => {
@@ -62,8 +62,8 @@ describe('crud', () => {
           crud<number, { id: number }>('/users', {
             get: jest.fn().mockResolvedValue({ rows: [{ id: 1 }], count: 1 }),
           }, {
-            additionalAttributes: async (record) => {
-              return { additionalProperty: await new Promise(resolve => resolve(`value ${record.id}`)) }
+            additionalAttributes:  {
+additionalProperty: async (record) => new Promise(resolve => resolve(`value ${record.id}`))
             }
           }),
           ctx
@@ -75,6 +75,73 @@ describe('crud', () => {
           filter: {},
         })
         expect(response.data[0]).toEqual({ id: 1, additionalProperty: 'value 1' })
+      })
+
+      describe('populateReferenceMany', () => {
+        it('populate references', async () => {
+          const dataProvider = await setupApp(
+            crud<number, { id: number }>('/users', {
+              get: jest.fn().mockResolvedValue({ rows: [{ id: 1 }, { id: 2 } , { id: 3 }], count: 2 }),
+            }, {
+              additionalAttributes: {
+                posts: populateReferenceMany({
+                  fetchAll: async () => [
+                    {id: 10, authorId: 1},
+                    {id: 11, authorId: 1},
+                    {id: 12, authorId: 2},
+                  ],
+                  target: 'authorId'
+                })
+              }
+            }),
+            ctx
+          )
+
+          const response = await dataProvider.getList('users', {
+            pagination: { page: 0, perPage: 25 },
+            sort: { field: 'id', order: 'DESC' },
+            filter: {},
+          })
+          expect(response.data[0]).toEqual({ id: 1, posts: [
+            {id: 10, authorId: 1},
+                    {id: 11, authorId: 1}
+          ] })
+          expect(response.data[1]).toEqual({ id: 2, posts: [
+            {id: 12, authorId: 2},
+          ] })
+          expect(response.data[2]).toEqual({ id: 3, posts: [] })
+        })
+      })
+
+      describe('populateReferenceManyCount', () => {
+        it('populate reference counts', async () => {
+          const dataProvider = await setupApp(
+            crud<number, { id: number }>('/users', {
+              get: jest.fn().mockResolvedValue({ rows: [{ id: 1 }, { id: 2 } , { id: 3 }], count: 2 }),
+            }, {
+              additionalAttributes: {
+                postsCount: populateReferenceManyCount({
+                  fetchAll: async () => [
+                    {id: 10, authorId: 1},
+                    {id: 11, authorId: 1},
+                    {id: 12, authorId: 2},
+                  ],
+                  target: 'authorId'
+                })
+              }
+            }),
+            ctx
+          )
+
+          const response = await dataProvider.getList('users', {
+            pagination: { page: 0, perPage: 25 },
+            sort: { field: 'id', order: 'DESC' },
+            filter: {},
+          })
+          expect(response.data[0]).toEqual({ id: 1, postsCount: 2 })
+          expect(response.data[1]).toEqual({ id: 2, postsCount: 1 })
+          expect(response.data[2]).toEqual({ id: 3, postsCount: 0 })
+        })
       })
     })
 

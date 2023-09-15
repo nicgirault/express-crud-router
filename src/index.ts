@@ -5,6 +5,7 @@ import { getOne } from './getOne'
 import { create, Create } from './create'
 import { update, Update } from './update'
 import { destroy, Destroy } from './delete'
+import { populateReference, populateReferenceMany, populateReferenceManyCount, populateReferenceOne } from './additionalAttributeHelpers'
 
 export interface Actions<I extends string | number, R> {
   get: Get<R> | null
@@ -14,8 +15,7 @@ export interface Actions<I extends string | number, R> {
 }
 
 
-
-export { Create, Destroy, Update, Get }
+export { Create, Destroy, Update, Get, populateReference, populateReferenceMany, populateReferenceManyCount, populateReferenceOne }
 
 export const crud = <I extends string | number, R>(
   path: string,
