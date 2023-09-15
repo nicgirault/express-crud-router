@@ -126,12 +126,42 @@ Additional attributes can be populated in the read views. For example one can ad
 
 ```ts
 crud('/admin/categories', actions, {
-  additionalAttributes: async category => {
-    return {
-      postsCount: await Post.count({ categoryId: category.id })
-    }
+  additionalAttributes: {
+    postsCount: category => Post.count({ categoryId: category.id })
   },
   additionalAttributesConcurrency: 10 // 10 queries Post.count will be perform at the same time
+})
+```
+
+additionalAttributes function parameters are:
+- the current row
+- an object: `{rows, req}` where rows are all page rows and req is the express request.
+
+Similarly to how react-admin deals with resource references, express-crud-router provides additional field helpers:
+- `populateReference`
+- `populateReferenceMany`
+- `populateReferenceManyCount`
+- `populateReferenceOne`
+
+Using additionalAttributes with `populateReferenceManyCount` or `populateReferenceOne` can be useful instead of using react-admin ReferenceManyCount and ReferenceOne as they are often used in list views and generate one HTTP query per row.
+
+```ts
+crud<number, { id: number }>('/users', {
+  get: jest.fn().mockResolvedValue({
+    rows: [{ id: 1 }, { id: 2 } , { id: 3 }],
+    count: 2
+  }),
+}, {
+  additionalAttributes: {
+    posts: populateReferenceMany({
+      fetchAll: async () => [
+        {id: 10, authorId: 1},
+        {id: 11, authorId: 1},
+        {id: 12, authorId: 2},
+      ],
+      target: 'authorId'
+    })
+  }
 })
 ```
 

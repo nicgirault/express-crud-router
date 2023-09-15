@@ -15,7 +15,7 @@ export type Get<R> = (conf: {
 
 export interface GetListOptions<R> {
   filters: FiltersOption
-  additionalAttributes: (record: R) => object | Promise<object>
+  additionalAttributes: Record<string, (record: R, context: {rows: R[], req: Request}) => any>
   additionalAttributesConcurrency: number
 }
 
@@ -40,7 +40,7 @@ export const getMany = <R>(
     setGetListHeaders(res, offset, count, rows.length)
     res.json(
       options?.additionalAttributes
-        ? await computeAdditionalAttributes(options.additionalAttributes, options.additionalAttributesConcurrency ?? 1)(rows)
+        ? await computeAdditionalAttributes(options.additionalAttributes, options.additionalAttributesConcurrency ?? 1, req)(rows)
         : rows
     )
 
@@ -84,10 +84,16 @@ const getFilter = async (
 
 
 const computeAdditionalAttributes =
-  <R>(additionalAttributes: GetListOptions<R>["additionalAttributes"], concurrency: number) => {
+  <R>(additionalAttributes: GetListOptions<R>["additionalAttributes"], concurrency: number, req: Request) => {
     const limit = pLimit(concurrency)
 
-    return (records: R[]) => Promise.all(records.map(record =>
-      limit(async () => ({ ...record, ...await additionalAttributes(record) }))
+    return (records: R[]) => Promise.all(records.map(async record => {
+      const populatedRecord: any = {...record}
+      for (const [key, mapper] of Object.entries(additionalAttributes)) {
+        populatedRecord[key] = await limit(() => mapper(record, {rows: records, req}))
+      }
+
+      return populatedRecord
+    }
     ))
   }
