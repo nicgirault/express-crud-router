@@ -54,14 +54,11 @@ export const parseQuery = async (query: any, filtersOption: FiltersOption) => {
 
   const [from, to] = range ? JSON.parse(range) : [0, 10000]
 
-  const { q, ...filters } = JSON.parse(filter || '{}')
-
   return {
     offset: from,
     limit: to - from + 1,
-    filter: await getFilter(filters, filtersOption),
+    filter: await getFilter(JSON.parse(filter || '{}'), filtersOption),
     order: [sort ? JSON.parse(sort) : ['id', 'ASC']] as [[string, string]],
-    q,
   }
 }
 
