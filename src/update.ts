@@ -25,6 +25,7 @@ export const update = <R>(
       id: req.params.id,
       ...result
     })
+    next()
   } catch (error) {
     next(error)
   }

@@ -43,7 +43,7 @@ export const getMany = <R>(
         ? await computeAdditionalAttributes(options.additionalAttributes, options.additionalAttributesConcurrency ?? 1, req)(rows)
         : rows
     )
-
+    next()
   } catch (error) {
     next(error)
   }
