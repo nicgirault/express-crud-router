@@ -33,7 +33,7 @@ export const crud = <I extends string | number, R>(
         options
       )
     )
-    router.get(`${path}/:id`, getOne(actions.get))
+    router.get(`${path}/:id`, getOne(actions.get, options))
   }
 
   if (actions.create) {
