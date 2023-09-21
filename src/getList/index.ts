@@ -80,7 +80,7 @@ const getFilter = async (
 }
 
 
-const computeAdditionalAttributes =
+export const computeAdditionalAttributes =
   <R>(additionalAttributes: GetListOptions<R>["additionalAttributes"], concurrency: number, req: Request) => {
     const limit = pLimit(concurrency)
 
